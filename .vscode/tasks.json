@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run TinyMonitor",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/tinymonitor",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}
