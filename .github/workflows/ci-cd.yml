@@ -2,10 +2,22 @@ name: CI/CD TinyMonitor
 
 on:
   push:
-    branches: [ "main" ]
-    tags: [ "v*" ]
+    branches:
+      - "main"
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - "tinymonitor.spec"
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - "main"
+    paths:
+      - "src/**"
+      - "pyproject.toml"
+      - "requirements.txt"
+      - "tinymonitor.spec"
+
 
 jobs:
   # ------------------------------------------------------------------
