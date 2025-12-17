@@ -1,3 +1,4 @@
+![tinymonitor](assets/images/logo.png "Tinymonitor")
 # Welcome to TinyMonitor
 
 **TinyMonitor** is a lightweight, zero-dependency (binary) system monitoring agent designed for simplicity and ease of deployment.
