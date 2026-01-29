@@ -1,14 +1,21 @@
-__pycache__/
-*.py[cod]
-*$py.class
-.DS_Store
-.venv
-env/
-venv/
-dist/
-build/
-.cache
-*.egg-info/
+# Binaries
+/tinymonitor
+/tinymonitor-*
+*.exe
+
+# Logs
 *.log
+
+# Config (local testing)
+/config.json
 config-test.json
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Documentation build
 site/
