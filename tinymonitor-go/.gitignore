@@ -1,0 +1,14 @@
+# Binaries (at root level only)
+/tinymonitor
+/tinymonitor-*
+*.exe
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
