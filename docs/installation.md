@@ -1,14 +1,14 @@
 # Installation Guide
 
-TinyMonitor can be installed as a standalone binary (recommended for servers) or via Python pip.
+TinyMonitor is distributed as a standalone binary. No dependencies required.
 
-## 1. Install the Binary
+## 1. Download the Binary
 
 === "Linux (AMD64)"
     ```bash
     # Download
     wget -O /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-linux-amd64
-    
+
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
     ```
@@ -17,7 +17,7 @@ TinyMonitor can be installed as a standalone binary (recommended for servers) or
     ```bash
     # Download
     wget -O /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-linux-arm64
-    
+
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
     ```
@@ -26,36 +26,35 @@ TinyMonitor can be installed as a standalone binary (recommended for servers) or
     ```bash
     # Download
     curl -L -o /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-darwin-arm64
-    
+
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
     ```
 
-## 2. Install via Python (Alternative)
-
-If you cannot use the binary or prefer to run from source, you can install TinyMonitor using `pip`.
-
-### Prerequisites
-*   Python 3.8 or higher
-*   `pip`
-
-### Installation
-
-1.  Clone the repository:
+=== "macOS (Intel)"
     ```bash
-    git clone https://github.com/Gu1llaum-3/tinymonitor.git
-    cd tinymonitor
+    # Download
+    curl -L -o /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-darwin-amd64
+
+    # Make executable
+    chmod +x /usr/local/bin/tinymonitor
     ```
 
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+## 2. Build from Source
 
-3.  Run the application:
-    ```bash
-    python3 -m tinymonitor --config config.json
-    ```
+If you prefer to build from source, you need Go 1.21 or higher.
+
+```bash
+# Clone the repository
+git clone https://github.com/Gu1llaum-3/tinymonitor.git
+cd tinymonitor
+
+# Build
+make build
+
+# Or build manually
+go build -o tinymonitor ./cmd/tinymonitor
+```
 
 ## 3. Run as a Service
 
@@ -71,10 +70,9 @@ To ensure TinyMonitor runs in the background and starts on boot, configure it as
 
     [Service]
     Type=simple
-    # Config is automatically loaded from /etc/tinymonitor/config.json
     ExecStart=/usr/local/bin/tinymonitor
     Restart=on-failure
-    
+
     # Security: Run as unprivileged user
     User=nobody
     Group=nogroup
@@ -85,6 +83,8 @@ To ensure TinyMonitor runs in the background and starts on boot, configure it as
 
     Enable and start the service:
     ```bash
+    sudo mkdir -p /etc/tinymonitor
+    sudo cp config.json /etc/tinymonitor/config.json
     sudo systemctl daemon-reload
     sudo systemctl enable --now tinymonitor
     sudo systemctl status tinymonitor
@@ -103,7 +103,7 @@ To ensure TinyMonitor runs in the background and starts on boot, configure it as
         <key>ProgramArguments</key>
         <array>
             <string>/usr/local/bin/tinymonitor</string>
-            <string>--config</string>
+            <string>-c</string>
             <string>/Users/YOUR_USER/.config/tinymonitor/config.json</string>
         </array>
         <key>RunAtLoad</key>
@@ -112,4 +112,9 @@ To ensure TinyMonitor runs in the background and starts on boot, configure it as
         <true/>
     </dict>
     </plist>
+    ```
+
+    Load the service:
+    ```bash
+    launchctl load ~/Library/LaunchAgents/com.tinymonitor.plist
     ```

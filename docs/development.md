@@ -3,9 +3,9 @@
 Want to contribute? Here is how to build and test TinyMonitor.
 
 ## Prerequisites
-*   Python 3.8+
-*   Make
-*   Virtualenv (recommended)
+
+*   Go 1.21+
+*   Make (optional but recommended)
 
 ## Setup Environment
 
@@ -15,16 +15,37 @@ Want to contribute? Here is how to build and test TinyMonitor.
     cd tinymonitor
     ```
 
-2.  Create a virtual environment:
+2.  Build the project:
     ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate
+    make build
+    # Or directly with Go
+    go build -o tinymonitor ./cmd/tinymonitor
     ```
 
-3.  Install development dependencies:
+3.  Run tests:
     ```bash
-    pip install -r requirements-dev.txt
+    make test
+    # Or directly with Go
+    go test ./...
     ```
+
+## Project Structure
+
+```
+tinymonitor/
+├── cmd/tinymonitor/main.go     # Entry point
+├── internal/
+│   ├── config/                 # Configuration loading
+│   ├── monitor/                # Main monitoring loop
+│   ├── metrics/                # Metric collectors (CPU, memory, disk, etc.)
+│   ├── alerts/                 # Alert providers (Ntfy, SMTP, etc.)
+│   ├── models/                 # Shared types
+│   └── utils/                  # Utility functions
+├── configs/                    # Example configurations
+├── docs/                       # Documentation
+├── go.mod
+└── Makefile
+```
 
 ## Commands
 
@@ -32,10 +53,37 @@ We use a `Makefile` to automate tasks:
 
 | Command | Description |
 | :--- | :--- |
-| `make install` | Install dependencies and dev tools. |
+| `make build` | Build the binary. |
 | `make test` | Run unit tests. |
-| `make build` | Compile the standalone binary to `dist/`. |
+| `make vet` | Run static analysis. |
+| `make release` | Build binaries for all platforms. |
 | `make clean` | Remove build artifacts. |
+
+## Adding a New Metric
+
+1.  Create a new file in `internal/metrics/` (e.g., `network.go`)
+2.  Implement the `Collector` interface:
+    ```go
+    type Collector interface {
+        Name() string
+        Check() []models.MetricResult
+        Duration() int
+    }
+    ```
+3.  Register the collector in `internal/monitor/monitor.go`
+
+## Adding a New Alert Provider
+
+1.  Create a new file in `internal/alerts/` (e.g., `slack.go`)
+2.  Implement the `Provider` interface:
+    ```go
+    type Provider interface {
+        Name() string
+        Send(alert models.Alert) error
+        ShouldSend(component string, level models.Severity) bool
+    }
+    ```
+3.  Register the provider in `internal/alerts/manager.go`
 
 ## CI/CD Pipeline
 

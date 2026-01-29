@@ -18,7 +18,7 @@ TinyMonitor looks for the configuration file in the following order:
     "refresh": 5,          // (1)
     "cooldown": 60,        // (2)
     "log_file": "",        // (3)
-    
+
     "cpu": {
         "enabled": true,
         "warning": 70,
@@ -54,3 +54,7 @@ TinyMonitor looks for the configuration file in the following order:
 3.  **Logging**: Leave empty `""` to log to stdout (best for Systemd/Docker). Set a path like `/var/log/tinymonitor.log` for a file.
 4.  **Duration**: The condition must persist for X seconds before alerting. Prevents false positives on CPU spikes.
 5.  **Immediate Alert**: Duration 0 means alert immediately.
+
+## Complete Example
+
+See [configs/config.example.json](https://github.com/Gu1llaum-3/tinymonitor/blob/main/configs/config.example.json) for a complete configuration example with all available options.
