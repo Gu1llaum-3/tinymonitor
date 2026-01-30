@@ -26,22 +26,6 @@ type SMTPProvider struct {
 
 // NewSMTPProvider creates a new SMTP provider
 func NewSMTPProvider(cfg config.SMTPConfig) *SMTPProvider {
-	var toAddrs []string
-	switch v := cfg.ToAddrs.(type) {
-	case string:
-		for _, addr := range strings.Split(v, ",") {
-			toAddrs = append(toAddrs, strings.TrimSpace(addr))
-		}
-	case []interface{}:
-		for _, addr := range v {
-			if s, ok := addr.(string); ok {
-				toAddrs = append(toAddrs, strings.TrimSpace(s))
-			}
-		}
-	case []string:
-		toAddrs = v
-	}
-
 	return &SMTPProvider{
 		BaseProvider: BaseProvider{
 			ProviderName: "smtp",
@@ -54,7 +38,7 @@ func NewSMTPProvider(cfg config.SMTPConfig) *SMTPProvider {
 		user:     cfg.User,
 		password: cfg.Password,
 		fromAddr: cfg.FromAddr,
-		toAddrs:  toAddrs,
+		toAddrs:  cfg.ToAddrs,
 		useTLS:   cfg.UseTLS,
 	}
 }

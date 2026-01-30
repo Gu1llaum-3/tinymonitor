@@ -37,30 +37,33 @@ func TestDefault(t *testing.T) {
 	}
 }
 
-func TestLoadFromFile(t *testing.T) {
-	// Create a temporary config file
+func TestLoadFromTOMLFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, "config.json")
+	configPath := filepath.Join(tmpDir, "config.toml")
 
-	configContent := `{
-		"refresh": 5,
-		"cooldown": 120,
-		"cpu": {
-			"warning": 80,
-			"critical": 95,
-			"enabled": true,
-			"duration": 30
-		},
-		"alerts": {
-			"google_chat": {
-				"enabled": true,
-				"webhook_url": "https://example.com/webhook"
-			}
-		}
-	}`
+	configContent := `
+refresh = 10
+cooldown = 180
+
+[cpu]
+enabled = true
+warning = 75
+critical = 95
+duration = 15
+
+[memory]
+enabled = false
+
+[alerts.ntfy]
+enabled = true
+topic_url = "https://ntfy.sh/test"
+
+  [alerts.ntfy.rules]
+  default = ["WARNING", "CRITICAL"]
+`
 
 	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
-		t.Fatalf("Failed to write test config: %v", err)
+		t.Fatalf("Failed to write test TOML config: %v", err)
 	}
 
 	cfg, err := Load(configPath)
@@ -68,40 +71,39 @@ func TestLoadFromFile(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 
-	if cfg.Refresh != 5 {
-		t.Errorf("Expected Refresh=5, got %d", cfg.Refresh)
+	if cfg.Refresh != 10 {
+		t.Errorf("Expected Refresh=10, got %d", cfg.Refresh)
 	}
 
-	if cfg.Cooldown != 120 {
-		t.Errorf("Expected Cooldown=120, got %d", cfg.Cooldown)
+	if cfg.Cooldown != 180 {
+		t.Errorf("Expected Cooldown=180, got %d", cfg.Cooldown)
 	}
 
-	if cfg.CPU.Warning != 80 {
-		t.Errorf("Expected CPU.Warning=80, got %f", cfg.CPU.Warning)
+	if cfg.CPU.Warning != 75 {
+		t.Errorf("Expected CPU.Warning=75, got %f", cfg.CPU.Warning)
 	}
 
-	if cfg.CPU.Duration != 30 {
-		t.Errorf("Expected CPU.Duration=30, got %d", cfg.CPU.Duration)
+	if cfg.CPU.Duration != 15 {
+		t.Errorf("Expected CPU.Duration=15, got %d", cfg.CPU.Duration)
 	}
 
-	if !cfg.Alerts.GoogleChat.Enabled {
-		t.Error("Expected GoogleChat.Enabled=true")
+	if cfg.Memory.Enabled {
+		t.Error("Expected Memory.Enabled=false")
 	}
 
-	if cfg.Alerts.GoogleChat.WebhookURL != "https://example.com/webhook" {
-		t.Errorf("Expected GoogleChat.WebhookURL='https://example.com/webhook', got '%s'", cfg.Alerts.GoogleChat.WebhookURL)
+	if !cfg.Alerts.Ntfy.Enabled {
+		t.Error("Expected Ntfy.Enabled=true")
+	}
+
+	if cfg.Alerts.Ntfy.TopicURL != "https://ntfy.sh/test" {
+		t.Errorf("Expected Ntfy.TopicURL='https://ntfy.sh/test', got '%s'", cfg.Alerts.Ntfy.TopicURL)
 	}
 }
 
 func TestLoadNonExistentFile(t *testing.T) {
-	cfg, err := Load("/nonexistent/path/config.json")
-	if err != nil {
-		t.Fatalf("Load should not return error for missing file: %v", err)
-	}
-
-	// Should return defaults
-	if cfg.Refresh != 2 {
-		t.Errorf("Expected default Refresh=2, got %d", cfg.Refresh)
+	_, err := Load("/nonexistent/path/config.toml")
+	if err == nil {
+		t.Error("Expected error for non-existent file")
 	}
 }
 
@@ -111,8 +113,148 @@ func TestLoadEmptyPath(t *testing.T) {
 		t.Fatalf("Load should not return error for empty path: %v", err)
 	}
 
-	// Should return defaults (or find config in standard locations)
 	if cfg == nil {
 		t.Error("Expected non-nil config")
+	}
+}
+
+func TestValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		config      string
+		expectError bool
+		errorField  string
+	}{
+		{
+			name: "valid config",
+			config: `
+refresh = 5
+cooldown = 60
+
+[cpu]
+enabled = true
+warning = 70
+critical = 90
+`,
+			expectError: false,
+		},
+		{
+			name: "invalid refresh",
+			config: `
+refresh = 0
+cooldown = 60
+`,
+			expectError: true,
+			errorField:  "refresh",
+		},
+		{
+			name: "warning >= critical",
+			config: `
+refresh = 5
+cooldown = 60
+
+[cpu]
+enabled = true
+warning = 90
+critical = 70
+`,
+			expectError: true,
+			errorField:  "cpu",
+		},
+		{
+			name: "threshold out of range",
+			config: `
+refresh = 5
+cooldown = 60
+
+[cpu]
+enabled = true
+warning = 150
+critical = 200
+`,
+			expectError: true,
+			errorField:  "cpu.warning",
+		},
+		{
+			name: "ntfy enabled without topic_url",
+			config: `
+refresh = 5
+cooldown = 60
+
+[alerts.ntfy]
+enabled = true
+topic_url = ""
+`,
+			expectError: true,
+			errorField:  "alerts.ntfy.topic_url",
+		},
+		{
+			name: "smtp enabled without host",
+			config: `
+refresh = 5
+cooldown = 60
+
+[alerts.smtp]
+enabled = true
+host = ""
+port = 587
+`,
+			expectError: true,
+			errorField:  "alerts.smtp.host",
+		},
+		{
+			name: "smtp invalid port",
+			config: `
+refresh = 5
+cooldown = 60
+
+[alerts.smtp]
+enabled = true
+host = "smtp.example.com"
+port = 99999
+user = "user"
+password = "pass"
+from_addr = "test@example.com"
+to_addrs = ["admin@example.com"]
+`,
+			expectError: true,
+			errorField:  "alerts.smtp.port",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			configPath := filepath.Join(tmpDir, "config.toml")
+
+			if err := os.WriteFile(configPath, []byte(tt.config), 0644); err != nil {
+				t.Fatalf("Failed to write test config: %v", err)
+			}
+
+			_, err := LoadAndValidate(configPath)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("Expected validation error, got nil")
+					return
+				}
+				if validationErrs, ok := err.(ValidationErrors); ok {
+					found := false
+					for _, e := range validationErrs {
+						if e.Field == tt.errorField {
+							found = true
+							break
+						}
+					}
+					if !found {
+						t.Errorf("Expected error for field '%s', got: %v", tt.errorField, err)
+					}
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
 	}
 }

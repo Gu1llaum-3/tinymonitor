@@ -38,7 +38,7 @@ archives:
     files:
       - LICENSE
       - README.md
-      - configs/config.example.json
+      - configs/config.example.toml
 
 checksum:
   name_template: "checksums.txt"

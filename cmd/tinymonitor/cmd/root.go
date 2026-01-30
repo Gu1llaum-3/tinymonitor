@@ -39,7 +39,15 @@ func runMonitor(cmd *cobra.Command, args []string) {
 	// Load configuration
 	cfg, err := config.Load(cfgFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Configuration error:")
+		if validationErrs, ok := err.(config.ValidationErrors); ok {
+			for _, e := range validationErrs {
+				fmt.Fprintf(os.Stderr, "  - %s: %s\n", e.Field, e.Message)
+			}
+			fmt.Fprintln(os.Stderr, "\nRun 'tinymonitor validate -c <file>' for details.")
+		} else {
+			fmt.Fprintf(os.Stderr, "  %v\n", err)
+		}
 		os.Exit(1)
 	}
 
