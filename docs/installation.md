@@ -7,7 +7,9 @@ TinyMonitor is distributed as a standalone binary. No dependencies required.
 === "Linux (AMD64)"
     ```bash
     # Download
-    wget -O /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-linux-amd64
+    wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_x86_64.tar.gz
+    tar -xzf tinymonitor_Linux_x86_64.tar.gz
+    sudo mv tinymonitor_Linux_x86_64/tinymonitor /usr/local/bin/
 
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
@@ -16,7 +18,9 @@ TinyMonitor is distributed as a standalone binary. No dependencies required.
 === "Linux (ARM64 / RPi)"
     ```bash
     # Download
-    wget -O /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-linux-arm64
+    wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_arm64.tar.gz
+    tar -xzf tinymonitor_Linux_arm64.tar.gz
+    sudo mv tinymonitor_Linux_arm64/tinymonitor /usr/local/bin/
 
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
@@ -25,7 +29,9 @@ TinyMonitor is distributed as a standalone binary. No dependencies required.
 === "macOS (Apple Silicon)"
     ```bash
     # Download
-    curl -L -o /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-darwin-arm64
+    curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Darwin_arm64.tar.gz
+    tar -xzf tinymonitor.tar.gz
+    sudo mv tinymonitor_Darwin_arm64/tinymonitor /usr/local/bin/
 
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
@@ -34,7 +40,9 @@ TinyMonitor is distributed as a standalone binary. No dependencies required.
 === "macOS (Intel)"
     ```bash
     # Download
-    curl -L -o /usr/local/bin/tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-darwin-amd64
+    curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Darwin_x86_64.tar.gz
+    tar -xzf tinymonitor.tar.gz
+    sudo mv tinymonitor_Darwin_x86_64/tinymonitor /usr/local/bin/
 
     # Make executable
     chmod +x /usr/local/bin/tinymonitor
@@ -84,7 +92,7 @@ To ensure TinyMonitor runs in the background and starts on boot, configure it as
     Enable and start the service:
     ```bash
     sudo mkdir -p /etc/tinymonitor
-    sudo cp config.json /etc/tinymonitor/config.json
+    sudo cp config.toml /etc/tinymonitor/config.toml
     sudo systemctl daemon-reload
     sudo systemctl enable --now tinymonitor
     sudo systemctl status tinymonitor
@@ -104,7 +112,7 @@ To ensure TinyMonitor runs in the background and starts on boot, configure it as
         <array>
             <string>/usr/local/bin/tinymonitor</string>
             <string>-c</string>
-            <string>/Users/YOUR_USER/.config/tinymonitor/config.json</string>
+            <string>/Users/YOUR_USER/.config/tinymonitor/config.toml</string>
         </array>
         <key>RunAtLoad</key>
         <true/>

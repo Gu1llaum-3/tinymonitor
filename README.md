@@ -15,7 +15,8 @@
 *   **Lightweight**: Single binary, minimal footprint (~9MB), low CPU/RAM usage.
 *   **Zero Dependencies**: No runtime dependencies, just download and run.
 *   **Multi-Channel Alerts**: Google Chat, Ntfy, Gotify, SMTP (Email), and Generic Webhooks.
-*   **Flexible Configuration**: JSON config with per-metric thresholds, durations, and alert routing rules.
+*   **TOML Configuration**: Human-readable config with per-metric thresholds, durations, and alert routing rules.
+*   **Config Validation**: Built-in `validate` command to check your configuration before deployment.
 *   **Cross-Platform**: Linux and macOS (AMD64 & ARM64).
 
 ## Installation
@@ -24,63 +25,59 @@ Download the latest release for your platform from the [Releases Page](https://g
 
 ```bash
 # Linux AMD64
-wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-linux-amd64
-chmod +x tinymonitor-linux-amd64
-sudo mv tinymonitor-linux-amd64 /usr/local/bin/tinymonitor
+wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_x86_64.tar.gz
+tar -xzf tinymonitor_Linux_x86_64.tar.gz
+sudo mv tinymonitor_Linux_x86_64/tinymonitor /usr/local/bin/
 
 # Linux ARM64
-wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-linux-arm64
-chmod +x tinymonitor-linux-arm64
-sudo mv tinymonitor-linux-arm64 /usr/local/bin/tinymonitor
+wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_arm64.tar.gz
+tar -xzf tinymonitor_Linux_arm64.tar.gz
+sudo mv tinymonitor_Linux_arm64/tinymonitor /usr/local/bin/
 
 # macOS (Apple Silicon)
-curl -L -o tinymonitor https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor-darwin-arm64
-chmod +x tinymonitor
-sudo mv tinymonitor /usr/local/bin/tinymonitor
+curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Darwin_arm64.tar.gz
+tar -xzf tinymonitor.tar.gz
+sudo mv tinymonitor_Darwin_arm64/tinymonitor /usr/local/bin/
 ```
 
 ## Configuration
 
-TinyMonitor searches for configuration in this order:
+TinyMonitor uses TOML configuration and searches for files in this order:
 
-1.  **CLI Flag**: `-c /path/to/config.json`
-2.  **Current Directory**: `./config.json`
-3.  **User Config**: `~/.config/tinymonitor/config.json`
-4.  **System Config**: `/etc/tinymonitor/config.json`
+1.  **CLI Flag**: `-c /path/to/config.toml`
+2.  **Current Directory**: `./config.toml`
+3.  **User Config**: `~/.config/tinymonitor/config.toml`
+4.  **System Config**: `/etc/tinymonitor/config.toml`
 
-**Example `config.json`:**
+**Example `config.toml`:**
 
-```json
-{
-    "refresh": 5,
-    "cooldown": 60,
-    "cpu": {
-        "enabled": true,
-        "warning": 70,
-        "critical": 90,
-        "duration": 30
-    },
-    "memory": {
-        "enabled": true,
-        "warning": 80,
-        "critical": 95,
-        "duration": 60
-    },
-    "filesystem": {
-        "enabled": true,
-        "warning": 85,
-        "critical": 95
-    },
-    "alerts": {
-        "ntfy": {
-            "enabled": true,
-            "topic_url": "https://ntfy.sh/your_topic"
-        }
-    }
-}
+```toml
+refresh = 5
+cooldown = 60
+
+[cpu]
+enabled = true
+warning = 70
+critical = 90
+duration = 30
+
+[memory]
+enabled = true
+warning = 80
+critical = 95
+duration = 60
+
+[filesystem]
+enabled = true
+warning = 85
+critical = 95
+
+[alerts.ntfy]
+enabled = true
+topic_url = "https://ntfy.sh/your_topic"
 ```
 
-See [configs/config.example.json](configs/config.example.json) for a complete example.
+See [configs/config.example.toml](configs/config.example.toml) for a complete example.
 
 ## Usage
 
@@ -89,10 +86,13 @@ See [configs/config.example.json](configs/config.example.json) for a complete ex
 tinymonitor
 
 # Run with specific config
-tinymonitor -c /path/to/config.json
+tinymonitor -c /path/to/config.toml
+
+# Validate configuration before deployment
+tinymonitor validate -c /path/to/config.toml
 
 # Show version
-tinymonitor -v
+tinymonitor version
 ```
 
 ## Running as a Service (Linux Systemd)
@@ -100,7 +100,7 @@ tinymonitor -v
 1.  **Create config directory:**
     ```bash
     sudo mkdir -p /etc/tinymonitor
-    sudo cp config.json /etc/tinymonitor/config.json
+    sudo cp config.toml /etc/tinymonitor/config.toml
     ```
 
 2.  **Create service file** `/etc/systemd/system/tinymonitor.service`:

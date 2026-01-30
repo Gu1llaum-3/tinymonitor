@@ -4,19 +4,18 @@ The generic webhook allows you to send alerts to any external system (n8n, Zapie
 
 ## Configuration
 
-```json
-"webhook": {
-    "enabled": true,
-    "url": "https://your-endpoint.com/api/alert",
-    "headers": {
-        "Authorization": "Bearer your-secret-token",
-        "X-Custom-Header": "TinyMonitor"
-    },
-    "timeout": 10,
-    "rules": {
-        "default": ["WARNING", "CRITICAL"]
-    }
-}
+```toml
+[alerts.webhook]
+enabled = true
+url = "https://your-endpoint.com/api/alert"
+timeout = 10
+
+  [alerts.webhook.headers]
+  Authorization = "Bearer your-secret-token"
+  X-Custom-Header = "TinyMonitor"
+
+  [alerts.webhook.rules]
+  default = ["WARNING", "CRITICAL"]
 ```
 
 ### Parameters
@@ -25,7 +24,7 @@ The generic webhook allows you to send alerts to any external system (n8n, Zapie
 | :--- | :--- | :--- | :--- |
 | `enabled` | `bool` | `false` | Enable or disable this provider. |
 | `url` | `string` | `""` | The target URL (POST request). |
-| `headers` | `object` | `{}` | Custom HTTP headers to include. |
+| `headers` | `table` | `{}` | Custom HTTP headers to include. |
 | `timeout` | `int` | `10` | Request timeout in seconds. |
 
 ## Payload Format

@@ -4,20 +4,19 @@ Sends alerts via standard email using SMTP. Supports TLS/SSL encryption.
 
 ## Configuration
 
-```json
-"smtp": {
-    "enabled": true,
-    "host": "smtp.gmail.com",
-    "port": 587,
-    "user": "your_email@gmail.com",
-    "password": "your_app_password",
-    "from_addr": "monitor@server01.com",
-    "to_addrs": ["admin@company.com", "oncall@company.com"],
-    "use_tls": true,
-    "rules": {
-        "default": ["CRITICAL"]
-    }
-}
+```toml
+[alerts.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 587
+user = "your_email@gmail.com"
+password = "your_app_password"
+from_addr = "monitor@server01.com"
+to_addrs = ["admin@company.com", "oncall@company.com"]
+use_tls = true
+
+  [alerts.smtp.rules]
+  default = ["CRITICAL"]
 ```
 
 ### Parameters
@@ -34,4 +33,5 @@ Sends alerts via standard email using SMTP. Supports TLS/SSL encryption.
 | `use_tls` | `bool` | `true` | Enable STARTTLS security. |
 
 ### Gmail Note
+
 If you are using Gmail, you must enable 2-Step Verification and generate an **App Password**. You cannot use your regular login password.

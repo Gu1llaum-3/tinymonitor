@@ -33,16 +33,21 @@ Want to contribute? Here is how to build and test TinyMonitor.
 
 ```
 tinymonitor/
-├── cmd/tinymonitor/main.go     # Entry point
+├── cmd/tinymonitor/
+│   ├── main.go             # Entry point
+│   └── cmd/                 # CLI commands (Cobra)
+│       ├── root.go         # Main monitoring command
+│       ├── version.go      # Version command
+│       └── validate.go     # Config validation command
 ├── internal/
-│   ├── config/                 # Configuration loading
-│   ├── monitor/                # Main monitoring loop
-│   ├── metrics/                # Metric collectors (CPU, memory, disk, etc.)
-│   ├── alerts/                 # Alert providers (Ntfy, SMTP, etc.)
-│   ├── models/                 # Shared types
-│   └── utils/                  # Utility functions
-├── configs/                    # Example configurations
-├── docs/                       # Documentation
+│   ├── config/             # TOML configuration loading & validation
+│   ├── monitor/            # Main monitoring loop
+│   ├── metrics/            # Metric collectors (CPU, memory, disk, etc.)
+│   ├── alerts/             # Alert providers (Ntfy, SMTP, etc.)
+│   ├── models/             # Shared types
+│   └── utils/              # Utility functions
+├── configs/                # Example configurations
+├── docs/                   # Documentation
 ├── go.mod
 └── Makefile
 ```
@@ -58,6 +63,17 @@ We use a `Makefile` to automate tasks:
 | `make vet` | Run static analysis. |
 | `make release` | Build binaries for all platforms. |
 | `make clean` | Remove build artifacts. |
+
+## CLI Commands
+
+TinyMonitor uses Cobra for CLI management:
+
+```bash
+tinymonitor              # Run the monitoring agent
+tinymonitor version      # Show version information
+tinymonitor validate     # Validate configuration file
+tinymonitor -c config.toml  # Run with specific config
+```
 
 ## Adding a New Metric
 
@@ -85,10 +101,22 @@ We use a `Makefile` to automate tasks:
     ```
 3.  Register the provider in `internal/alerts/manager.go`
 
+## Configuration Validation
+
+When adding new configuration fields, update the validation in `internal/config/config.go`:
+
+```go
+func (c *Config) Validate() ValidationErrors {
+    var errs ValidationErrors
+    // Add your validation logic here
+    return errs
+}
+```
+
 ## CI/CD Pipeline
 
 The project uses GitHub Actions for continuous integration:
 
 1.  **Tests**: Runs on every push to `main`.
-2.  **Build**: Runs on every Tag (`v*`). Builds binaries for Linux (AMD64/ARM64) and macOS (Intel/Silicon).
+2.  **Build**: Runs on every Tag (`v*`). Uses GoReleaser to build binaries for Linux (AMD64/ARM64) and macOS (Intel/Silicon).
 3.  **Release**: Automatically creates a GitHub Release with the binaries attached.
