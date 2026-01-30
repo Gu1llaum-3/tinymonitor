@@ -1,0 +1,141 @@
+version: 2
+project_name: tinymonitor
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: tinymonitor
+    main: ./cmd/tinymonitor
+    binary: tinymonitor
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.Version={{.Version}}
+    flags:
+      - -trimpath
+
+archives:
+  - id: tinymonitor
+    formats: ["tar.gz"]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    wrap_in_directory: true
+    files:
+      - LICENSE
+      - README.md
+      - configs/config.example.json
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+      - "^build:"
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: Gu1llaum-3
+    name: tinymonitor
+  prerelease: auto
+  draft: false
+  replace_existing_draft: true
+  target_commitish: "{{ .Commit }}"
+  name_template: "{{.ProjectName}} {{.Version}}"
+  header: |
+    ## TinyMonitor {{.Version}}
+
+    Lightweight system monitoring agent written in Go.
+
+  footer: |
+    ## Installation
+
+    ### Quick Install
+
+    ```bash
+    # Linux AMD64
+    wget https://github.com/Gu1llaum-3/tinymonitor/releases/download/{{.Tag}}/tinymonitor_Linux_x86_64.tar.gz
+    tar -xzf tinymonitor_Linux_x86_64.tar.gz
+    sudo mv tinymonitor_Linux_x86_64/tinymonitor /usr/local/bin/
+    sudo chmod +x /usr/local/bin/tinymonitor
+
+    # Linux ARM64
+    wget https://github.com/Gu1llaum-3/tinymonitor/releases/download/{{.Tag}}/tinymonitor_Linux_arm64.tar.gz
+    tar -xzf tinymonitor_Linux_arm64.tar.gz
+    sudo mv tinymonitor_Linux_arm64/tinymonitor /usr/local/bin/
+
+    # macOS (Apple Silicon)
+    curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/download/{{.Tag}}/tinymonitor_Darwin_arm64.tar.gz
+    tar -xzf tinymonitor.tar.gz
+    sudo mv tinymonitor_Darwin_arm64/tinymonitor /usr/local/bin/
+    ```
+
+    ### From Source
+
+    ```bash
+    git clone https://github.com/Gu1llaum-3/tinymonitor.git
+    cd tinymonitor
+    make build
+    ```
+
+    ## Quick Start
+
+    1. Create configuration:
+    ```bash
+    sudo mkdir -p /etc/tinymonitor
+    sudo cp configs/config.example.json /etc/tinymonitor/config.json
+    ```
+
+    2. Run:
+    ```bash
+    tinymonitor
+    ```
+
+    ## Full Changelog
+
+    See all changes at https://github.com/Gu1llaum-3/tinymonitor/compare/{{.PreviousTag}}...{{.Tag}}
+
+    ---
+
+    📖 **Documentation:** [README](https://github.com/Gu1llaum-3/tinymonitor/blob/main/README.md)
+
+    🐛 **Issues:** [Open an issue](https://github.com/Gu1llaum-3/tinymonitor/issues)
+
+    ---
+
+    Released with ❤️ by [GoReleaser](https://github.com/goreleaser/goreleaser)
+
+snapshot:
+  version_template: "{{ .Tag }}-snapshot-{{.ShortCommit}}"
+
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
