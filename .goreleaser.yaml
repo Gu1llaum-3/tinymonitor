@@ -20,7 +20,9 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
-      - -X main.Version={{.Version}}
+      - -X github.com/Gu1llaum-3/tinymonitor/cmd/tinymonitor/cmd.Version={{.Version}}
+      - -X github.com/Gu1llaum-3/tinymonitor/cmd/tinymonitor/cmd.Commit={{.Commit}}
+      - -X github.com/Gu1llaum-3/tinymonitor/cmd/tinymonitor/cmd.BuildDate={{.Date}}
     flags:
       - -trimpath
 
