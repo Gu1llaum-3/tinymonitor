@@ -8,7 +8,7 @@ before:
 
 builds:
   - id: tinymonitor
-    main: ./cmd/tinymonitor
+    main: .
     binary: tinymonitor
     goos:
       - linux
@@ -20,9 +20,9 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w
-      - -X github.com/Gu1llaum-3/tinymonitor/cmd/tinymonitor/cmd.Version={{.Version}}
-      - -X github.com/Gu1llaum-3/tinymonitor/cmd/tinymonitor/cmd.Commit={{.Commit}}
-      - -X github.com/Gu1llaum-3/tinymonitor/cmd/tinymonitor/cmd.BuildDate={{.Date}}
+      - -X github.com/Gu1llaum-3/tinymonitor/cmd.Version={{.Version}}
+      - -X github.com/Gu1llaum-3/tinymonitor/cmd.Commit={{.Commit}}
+      - -X github.com/Gu1llaum-3/tinymonitor/cmd.BuildDate={{.Date}}
     flags:
       - -trimpath
 
@@ -114,7 +114,7 @@ release:
     1. Create configuration:
     ```bash
     sudo mkdir -p /etc/tinymonitor
-    sudo cp configs/config.example.json /etc/tinymonitor/config.json
+    sudo cp configs/config.example.toml /etc/tinymonitor/config.toml
     ```
 
     2. Run:
@@ -128,13 +128,9 @@ release:
 
     ---
 
-    📖 **Documentation:** [README](https://github.com/Gu1llaum-3/tinymonitor/blob/main/README.md)
+    **Documentation:** [README](https://github.com/Gu1llaum-3/tinymonitor/blob/main/README.md)
 
-    🐛 **Issues:** [Open an issue](https://github.com/Gu1llaum-3/tinymonitor/issues)
-
-    ---
-
-    Released with ❤️ by [GoReleaser](https://github.com/goreleaser/goreleaser)
+    **Issues:** [Open an issue](https://github.com/Gu1llaum-3/tinymonitor/issues)
 
 snapshot:
   version_template: "{{ .Tag }}-snapshot-{{.ShortCommit}}"
