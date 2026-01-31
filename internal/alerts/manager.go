@@ -121,6 +121,29 @@ func (m *Manager) SendAlert(component string, level models.Severity, value strin
 	}
 }
 
+// SendRecovery distributes a recovery notification to all configured providers
+func (m *Manager) SendRecovery(component string, previousLevel models.Severity, value string) {
+	alert := models.NewRecoveryAlert(component, previousLevel, value)
+
+	for _, provider := range m.providers {
+		// Send recovery to providers that would have received the original alert
+		if provider.ShouldSend(component, previousLevel) {
+			slog.Info("Triggering recovery",
+				"provider", provider.Name(),
+				"component", component,
+				"previous_level", previousLevel)
+
+			select {
+			case m.alertChan <- alertTask{provider: provider, alert: alert}:
+			default:
+				slog.Warn("Alert channel full, dropping recovery",
+					"provider", provider.Name(),
+					"component", component)
+			}
+		}
+	}
+}
+
 // Shutdown gracefully shuts down the manager
 func (m *Manager) Shutdown() {
 	m.cancel()

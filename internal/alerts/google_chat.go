@@ -49,6 +49,10 @@ func (p *GoogleChatProvider) Send(alert models.Alert) error {
 		icon = "⚠️"
 		fontColor = "#FFA500"
 		titleText = "WARNING : " + alert.Component
+	case models.SeverityRecovery:
+		icon = "✅"
+		fontColor = "#00AA00"
+		titleText = "RECOVERED : " + alert.Component
 	default:
 		icon = "ℹ️"
 		fontColor = "#000000"

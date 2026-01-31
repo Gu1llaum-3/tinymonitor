@@ -56,6 +56,8 @@ func (p *GotifyProvider) Send(alert models.Alert) error {
 		priority = 8
 	case models.SeverityWarning:
 		priority = 5
+	case models.SeverityRecovery:
+		priority = 3
 	default:
 		priority = 2
 	}

@@ -48,6 +48,9 @@ func (p *NtfyProvider) Send(alert models.Alert) error {
 	case models.SeverityWarning:
 		priority = "3"
 		tags = "warning"
+	case models.SeverityRecovery:
+		priority = "2"
+		tags = "white_check_mark,recovered"
 	default:
 		priority = "1"
 		tags = "information_source"

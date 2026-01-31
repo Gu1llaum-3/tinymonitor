@@ -58,11 +58,12 @@ type IOConfig struct {
 
 // AlertsConfig represents all alert providers configuration
 type AlertsConfig struct {
-	GoogleChat GoogleChatConfig `toml:"google_chat"`
-	Ntfy       NtfyConfig       `toml:"ntfy"`
-	SMTP       SMTPConfig       `toml:"smtp"`
-	Webhook    WebhookConfig    `toml:"webhook"`
-	Gotify     GotifyConfig     `toml:"gotify"`
+	SendRecovery bool             `toml:"send_recovery"`
+	GoogleChat   GoogleChatConfig `toml:"google_chat"`
+	Ntfy         NtfyConfig       `toml:"ntfy"`
+	SMTP         SMTPConfig       `toml:"smtp"`
+	Webhook      WebhookConfig    `toml:"webhook"`
+	Gotify       GotifyConfig     `toml:"gotify"`
 }
 
 // ProviderRules represents alert filtering rules
@@ -183,6 +184,7 @@ func Default() *Config {
 			Duration: 0,
 		},
 		Alerts: AlertsConfig{
+			SendRecovery: true,
 			GoogleChat: GoogleChatConfig{
 				Enabled: false,
 			},

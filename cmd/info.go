@@ -153,6 +153,14 @@ func printMetrics(cfg *config.Config) {
 func printAlertProviders(cfg *config.Config) {
 	fmt.Println("Alert Providers")
 
+	// Recovery setting
+	if cfg.Alerts.SendRecovery {
+		fmt.Println("  Recovery notifications: enabled")
+	} else {
+		fmt.Println("  Recovery notifications: disabled")
+	}
+	fmt.Println()
+
 	// Ntfy
 	if cfg.Alerts.Ntfy.Enabled {
 		fmt.Printf("  [✓] Ntfy        %s\n", cfg.Alerts.Ntfy.TopicURL)

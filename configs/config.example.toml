@@ -38,7 +38,7 @@ enabled = true
 warning = 80
 critical = 90
 duration = 0
-exclude = []      # Mountpoints to ignore, e.g. ["/mnt/backup", "/snap"]
+exclude = ["/dev"]      # Mountpoints to ignore, e.g. ["/mnt/backup", "/snap"]
 
 [io]
 enabled = true
@@ -54,6 +54,9 @@ duration = 0
 # ============================================================================
 # ALERT PROVIDERS
 # ============================================================================
+
+[alerts]
+send_recovery = true  # Send notification when a metric returns to normal
 
 # ------------------------------------------------------------------------------
 # Ntfy - Push notifications (https://ntfy.sh)

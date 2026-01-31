@@ -11,6 +11,14 @@ import (
 	"github.com/Gu1llaum-3/tinymonitor/internal/models"
 )
 
+// StateChange represents the result of processing a metric state
+type StateChange struct {
+	ShouldAlert   bool
+	IsRecovery    bool
+	Level         models.Severity
+	PreviousLevel models.Severity
+}
+
 // Monitor is the main monitoring loop
 type Monitor struct {
 	config       *config.Config
@@ -61,17 +69,23 @@ func (m *Monitor) loadCollectors() {
 }
 
 // processState manages alert state persistence
-// Returns true if the alert should be triggered
-func (m *Monitor) processState(component string, level *models.Severity, value string, duration int) bool {
+// Returns StateChange with information about what action to take
+func (m *Monitor) processState(component string, level *models.Severity, value string, duration int) StateChange {
 	if level == nil {
-		// Return to normal: clear state
+		// Return to normal: check if we need to send recovery
 		if state, exists := m.alertStates[component]; exists {
 			if state.AlertTriggered {
-				slog.Info("RECOVERY: component is back to normal", "component", component)
+				previousLevel := state.Level
+				delete(m.alertStates, component)
+				return StateChange{
+					ShouldAlert:   true,
+					IsRecovery:    true,
+					PreviousLevel: previousLevel,
+				}
 			}
 			delete(m.alertStates, component)
 		}
-		return false
+		return StateChange{ShouldAlert: false}
 	}
 
 	now := time.Now()
@@ -86,23 +100,31 @@ func (m *Monitor) processState(component string, level *models.Severity, value s
 
 		if duration <= 0 {
 			m.alertStates[component].AlertTriggered = true
-			return true
+			return StateChange{
+				ShouldAlert: true,
+				IsRecovery:  false,
+				Level:       *level,
+			}
 		}
 
 		slog.Debug("Detected alert, waiting for duration",
 			"component", component,
 			"level", *level,
 			"duration", duration)
-		return false
+		return StateChange{ShouldAlert: false}
 	}
 
 	elapsed := now.Sub(currentState.StartTime)
-	if elapsed >= time.Duration(duration)*time.Second {
+	if elapsed >= time.Duration(duration)*time.Second && !currentState.AlertTriggered {
 		m.alertStates[component].AlertTriggered = true
-		return true
+		return StateChange{
+			ShouldAlert: true,
+			IsRecovery:  false,
+			Level:       *level,
+		}
 	}
 
-	return false
+	return StateChange{ShouldAlert: false}
 }
 
 // triggerAlert sends an alert with rate limiting
@@ -144,6 +166,23 @@ func (m *Monitor) triggerAlert(component string, level models.Severity, value st
 	}
 }
 
+// triggerRecovery sends a recovery notification (no cooldown)
+func (m *Monitor) triggerRecovery(component string, previousLevel models.Severity, value string) {
+	if !m.config.Alerts.SendRecovery {
+		slog.Debug("Recovery notification disabled", "component", component)
+		return
+	}
+
+	slog.Info("RECOVERY",
+		"component", component,
+		"previous_level", previousLevel,
+		"value", value)
+	m.alertManager.SendRecovery(component, previousLevel, value)
+
+	// Clear the lastAlert time so future alerts aren't affected
+	delete(m.lastAlert, component)
+}
+
 // Run starts the monitoring loop
 func (m *Monitor) Run(ctx context.Context) {
 	slog.Info("Starting TinyMonitor...")
@@ -171,8 +210,14 @@ func (m *Monitor) runChecks() {
 		results := collector.Check()
 		for _, result := range results {
 			duration := collector.Duration()
-			if m.processState(result.Component, result.Level, result.Value, duration) {
-				m.triggerAlert(result.Component, *result.Level, result.Value)
+			change := m.processState(result.Component, result.Level, result.Value, duration)
+
+			if change.ShouldAlert {
+				if change.IsRecovery {
+					m.triggerRecovery(result.Component, change.PreviousLevel, result.Value)
+				} else {
+					m.triggerAlert(result.Component, change.Level, result.Value)
+				}
 			}
 		}
 	}

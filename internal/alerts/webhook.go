@@ -41,15 +41,22 @@ func (p *WebhookProvider) Send(alert models.Alert) error {
 		return fmt.Errorf("no url provided")
 	}
 
+	alertData := map[string]interface{}{
+		"level":     alert.Level,
+		"component": alert.Component,
+		"value":     alert.Value,
+		"title":     alert.Title,
+		"message":   alert.Message,
+	}
+
+	// Add previous_level for recovery alerts
+	if alert.IsRecovery() {
+		alertData["previous_level"] = alert.PreviousLevel
+	}
+
 	payload := map[string]interface{}{
 		"timestamp": time.Now().Format(time.RFC3339),
-		"alert": map[string]interface{}{
-			"level":     alert.Level,
-			"component": alert.Component,
-			"value":     alert.Value,
-			"title":     alert.Title,
-			"message":   alert.Message,
-		},
+		"alert":     alertData,
 		"host": map[string]interface{}{
 			"hostname":     utils.GetHostname(),
 			"ip_private":   utils.GetPrivateIP(),

@@ -59,13 +59,26 @@ func (p *SMTPProvider) Send(alert models.Alert) error {
 
 	subject := fmt.Sprintf("[%s] %s on %s - %s", alert.Level, alert.Component, hostname, alert.Value)
 
+	// Color based on level
+	var headerColor string
+	switch alert.Level {
+	case models.SeverityCritical:
+		headerColor = "#FF0000"
+	case models.SeverityWarning:
+		headerColor = "#FFA500"
+	case models.SeverityRecovery:
+		headerColor = "#00AA00"
+	default:
+		headerColor = "#333333"
+	}
+
 	htmlContent := fmt.Sprintf(`
 	<html>
 	<body>
-		<h2>%s</h2>
+		<h2 style="color: %s;">%s</h2>
 		<p><strong>Component:</strong> %s</p>
 		<p><strong>Value:</strong> %s</p>
-		<p><strong>Level:</strong> %s</p>
+		<p><strong>Level:</strong> <span style="color: %s;">%s</span></p>
 		<hr>
 		<h3>Machine Context</h3>
 		<ul>
@@ -78,7 +91,7 @@ func (p *SMTPProvider) Send(alert models.Alert) error {
 		</ul>
 	</body>
 	</html>`,
-		alert.Title, alert.Component, alert.Value, alert.Level,
+		headerColor, alert.Title, alert.Component, alert.Value, headerColor, alert.Level,
 		hostname, ipPrivate, ipPublic, loadAvg, uptimePretty, executionTime)
 
 	msg := fmt.Sprintf("From: %s\r\n"+

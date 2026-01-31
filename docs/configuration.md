@@ -116,6 +116,29 @@ Each metric (`cpu`, `memory`, `filesystem`, `load`) supports:
 | `critical` | `float` | varies | Threshold for CRITICAL alert (0-100 for percentages). |
 | `duration` | `int` | `0` | Time in seconds the value must exceed threshold before alerting. |
 
+### Alert Settings
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `send_recovery` | `bool` | `true` | Send notification when a metric returns to normal. |
+
+### Recovery Notifications
+
+When a metric returns to normal after triggering an alert, TinyMonitor can send a recovery notification:
+
+```toml
+[alerts]
+send_recovery = true  # Enable recovery notifications (default: true)
+```
+
+Recovery notifications are sent to the same providers that received the original alert. They have distinct formatting:
+
+*   **Ntfy**: Low priority, green checkmark emoji
+*   **Google Chat**: Green color, checkmark icon
+*   **SMTP**: Green header, "[RECOVERED]" in subject
+*   **Webhook**: `"level": "RECOVERED"` with `"previous_level"` field
+*   **Gotify**: Lower priority (3)
+
 ### Alert Rules
 
 Each alert provider supports filtering rules to control which alerts are sent:

@@ -8,6 +8,7 @@ type Severity string
 const (
 	SeverityWarning  Severity = "WARNING"
 	SeverityCritical Severity = "CRITICAL"
+	SeverityRecovery Severity = "RECOVERED"
 )
 
 // MetricResult represents the result of a metric check
@@ -19,12 +20,18 @@ type MetricResult struct {
 
 // Alert represents an alert to be sent
 type Alert struct {
-	Component string
-	Level     Severity
-	Value     string
-	Title     string
-	Message   string
-	Timestamp time.Time
+	Component     string
+	Level         Severity
+	Value         string
+	Title         string
+	Message       string
+	Timestamp     time.Time
+	PreviousLevel Severity // For recovery: the level before recovery
+}
+
+// IsRecovery returns true if this is a recovery alert
+func (a Alert) IsRecovery() bool {
+	return a.Level == SeverityRecovery
 }
 
 // AlertState tracks the state of an alert for duration-based alerting
@@ -55,5 +62,21 @@ func NewAlert(component string, level Severity, value string) Alert {
 		Title:     title,
 		Message:   message,
 		Timestamp: time.Now(),
+	}
+}
+
+// NewRecoveryAlert creates a new recovery alert
+func NewRecoveryAlert(component string, previousLevel Severity, value string) Alert {
+	title := "RECOVERED : " + component
+	message := "Component " + component + " is back to normal. Previous state: " + string(previousLevel) + ". Current value: " + value
+
+	return Alert{
+		Component:     component,
+		Level:         SeverityRecovery,
+		Value:         value,
+		Title:         title,
+		Message:       message,
+		Timestamp:     time.Now(),
+		PreviousLevel: previousLevel,
 	}
 }
