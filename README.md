@@ -88,6 +88,9 @@ tinymonitor
 # Run with specific config
 tinymonitor -c /path/to/config.toml
 
+# Display configuration summary
+tinymonitor info -c /path/to/config.toml
+
 # Validate configuration before deployment
 tinymonitor validate -c /path/to/config.toml
 

@@ -11,6 +11,36 @@ TinyMonitor looks for the configuration file in the following order:
 3.  **User Config**: `~/.config/tinymonitor/config.toml`
 4.  **System Config**: `/etc/tinymonitor/config.toml` (Recommended for Linux Services)
 
+## Viewing Configuration Summary
+
+To display a human-readable summary of your configuration:
+
+```bash
+tinymonitor info -c /path/to/config.toml
+```
+
+Example output:
+
+```
+Configuration: /etc/tinymonitor/config.toml
+
+Global Settings
+  Refresh:   5s
+  Cooldown:  60s
+  Log File:  (stdout)
+
+Metrics
+  [✓] CPU         warning: 70%    critical: 90%    duration: 30s
+  [✓] Memory      warning: 80%    critical: 95%    duration: 60s
+  [✓] Filesystem  warning: 85%    critical: 95%
+  [✗] Load        (disabled)
+
+Alert Providers
+  [✓] Ntfy        https://ntfy.sh/my_topic
+  [✗] Google Chat
+  [✓] SMTP        smtp.gmail.com:587 → 2 recipient(s)
+```
+
 ## Validating Configuration
 
 Before deploying, you can validate your configuration file:
