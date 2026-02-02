@@ -106,6 +106,12 @@ tinymonitor validate -c /path/to/config.toml
 tinymonitor test-alert                    # Test all providers
 tinymonitor test-alert --provider ntfy    # Test specific provider
 
+# Check for updates
+tinymonitor update --check
+
+# Update to latest version
+tinymonitor update
+
 # Show version
 tinymonitor version
 ```
@@ -148,6 +154,23 @@ sudo tinymonitor uninstall
 # Remove everything including configuration
 sudo tinymonitor uninstall --purge
 ```
+
+## Updating
+
+TinyMonitor can update itself to the latest version:
+
+```bash
+# Check for updates
+tinymonitor update --check
+
+# Update to latest version
+tinymonitor update
+
+# Update without confirmation
+tinymonitor update --yes
+```
+
+Your configuration files are never modified during updates. If the service is running, you'll be reminded to restart it after the update.
 
 ## Building from Source
 

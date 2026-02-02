@@ -141,6 +141,51 @@ Load the service:
 launchctl load ~/Library/LaunchAgents/com.tinymonitor.plist
 ```
 
+## Updating
+
+TinyMonitor can update itself to the latest version directly from GitHub releases.
+
+### Check for Updates
+
+```bash
+tinymonitor update --check
+```
+
+This will show your current version and the latest available version without making any changes.
+
+### Update to Latest Version
+
+```bash
+tinymonitor update
+```
+
+This will:
+
+1. Check for the latest version on GitHub
+2. Ask for confirmation
+3. Download and install the new binary
+4. Remind you to restart the service if running
+
+Your configuration file is **never modified** during updates.
+
+### Update Options
+
+```bash
+# Skip confirmation
+tinymonitor update --yes
+
+# Check only (don't install)
+tinymonitor update --check
+```
+
+### After Updating
+
+If TinyMonitor is running as a service, restart it to apply the update:
+
+```bash
+sudo systemctl restart tinymonitor
+```
+
 ## Uninstallation
 
 ### Linux
