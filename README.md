@@ -102,6 +102,10 @@ tinymonitor info -c /path/to/config.toml
 # Validate configuration before deployment
 tinymonitor validate -c /path/to/config.toml
 
+# Test alert notifications
+tinymonitor test-alert                    # Test all providers
+tinymonitor test-alert --provider ntfy    # Test specific provider
+
 # Show version
 tinymonitor version
 ```
