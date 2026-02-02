@@ -86,6 +86,14 @@ warning = 85
 critical = 95
 duration = 0         # Duration 0 = alert immediately
 
+# Load average monitoring (auto-adjusts to CPU count)
+[load]
+enabled = true
+auto = true          # Calculate thresholds based on CPU count
+warning_ratio = 0.7  # warning = CPU_COUNT × 0.7
+critical_ratio = 0.9 # critical = CPU_COUNT × 0.9
+duration = 60
+
 # Alert provider
 [alerts.ntfy]
 enabled = true
@@ -107,7 +115,7 @@ topic_url = "https://ntfy.sh/my_secret_topic"
 
 ### Metric Settings
 
-Each metric (`cpu`, `memory`, `filesystem`, `load`) supports:
+Each metric (`cpu`, `memory`, `filesystem`) supports:
 
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -115,6 +123,22 @@ Each metric (`cpu`, `memory`, `filesystem`, `load`) supports:
 | `warning` | `float` | varies | Threshold for WARNING alert (0-100 for percentages). |
 | `critical` | `float` | varies | Threshold for CRITICAL alert (0-100 for percentages). |
 | `duration` | `int` | `0` | Time in seconds the value must exceed threshold before alerting. |
+
+### Load Average Settings
+
+The `load` metric has an auto mode that calculates thresholds based on CPU count:
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `enabled` | `bool` | `true` | Enable or disable this metric. |
+| `auto` | `bool` | `true` | Calculate thresholds based on CPU count. |
+| `warning_ratio` | `float` | `0.7` | Multiplier for warning (auto mode): `CPU_COUNT × ratio`. |
+| `critical_ratio` | `float` | `0.9` | Multiplier for critical (auto mode): `CPU_COUNT × ratio`. |
+| `warning` | `float` | - | Absolute threshold (manual mode, requires `auto = false`). |
+| `critical` | `float` | - | Absolute threshold (manual mode, requires `auto = false`). |
+| `duration` | `int` | `60` | Time in seconds before alerting. |
+
+See [Load Average Metric](metrics/load.md) for more details.
 
 ### Alert Settings
 

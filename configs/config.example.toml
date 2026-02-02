@@ -29,9 +29,14 @@ duration = 0
 
 [load]
 enabled = true
-warning = 7.0     # Load average threshold (adjust based on CPU count)
-critical = 9.0
-duration = 60     # Wait 60s before alerting (avoids false positives)
+auto = true           # Calculate thresholds based on CPU count (recommended)
+warning_ratio = 0.7   # warning = CPU_COUNT × 0.7
+critical_ratio = 0.9  # critical = CPU_COUNT × 0.9
+duration = 60         # Wait 60s before alerting (avoids false positives)
+# For manual thresholds, set auto = false and use:
+# auto = false
+# warning = 5.0
+# critical = 10.0
 
 [filesystem]
 enabled = true

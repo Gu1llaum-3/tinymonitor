@@ -11,11 +11,11 @@ import (
 // LoadCollector monitors system load average
 type LoadCollector struct {
 	name   string
-	config config.MetricConfig
+	config config.LoadConfig
 }
 
 // NewLoadCollector creates a new load average collector
-func NewLoadCollector(cfg config.MetricConfig) *LoadCollector {
+func NewLoadCollector(cfg config.LoadConfig) *LoadCollector {
 	return &LoadCollector{
 		name:   "load",
 		config: cfg,
@@ -41,12 +41,13 @@ func (c *LoadCollector) Check() []models.MetricResult {
 	}
 
 	load1 := avg.Load1
+	warning, critical := c.config.GetThresholds()
 	var level *models.Severity
 
-	if load1 >= c.config.Critical {
+	if load1 >= critical {
 		sev := models.SeverityCritical
 		level = &sev
-	} else if load1 >= c.config.Warning {
+	} else if load1 >= warning {
 		sev := models.SeverityWarning
 		level = &sev
 	}

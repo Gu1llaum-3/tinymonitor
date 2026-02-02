@@ -30,10 +30,31 @@ func TestDefault(t *testing.T) {
 		t.Error("Expected CPU.Enabled=true")
 	}
 
+	// Load should use auto mode by default
+	if !cfg.Load.Auto {
+		t.Error("Expected Load.Auto=true")
+	}
+
+	if cfg.Load.WarningRatio != 0.7 {
+		t.Errorf("Expected Load.WarningRatio=0.7, got %f", cfg.Load.WarningRatio)
+	}
+
+	if cfg.Load.CriticalRatio != 0.9 {
+		t.Errorf("Expected Load.CriticalRatio=0.9, got %f", cfg.Load.CriticalRatio)
+	}
+
+	// Verify GetThresholds calculates correctly
 	cpuCount := runtime.NumCPU()
-	expectedLoadWarning := float64(cpuCount) * 0.7
-	if cfg.Load.Warning != expectedLoadWarning {
-		t.Errorf("Expected Load.Warning=%f, got %f", expectedLoadWarning, cfg.Load.Warning)
+	expectedWarning := float64(cpuCount) * 0.7
+	expectedCritical := float64(cpuCount) * 0.9
+	warning, critical := cfg.Load.GetThresholds()
+
+	if warning != expectedWarning {
+		t.Errorf("Expected Load warning threshold=%f, got %f", expectedWarning, warning)
+	}
+
+	if critical != expectedCritical {
+		t.Errorf("Expected Load critical threshold=%f, got %f", expectedCritical, critical)
 	}
 }
 

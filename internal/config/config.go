@@ -15,7 +15,7 @@ type Config struct {
 	Refresh    int              `toml:"refresh"`
 	Cooldown   int              `toml:"cooldown"`
 	LogFile    string           `toml:"log_file"`
-	Load       MetricConfig     `toml:"load"`
+	Load       LoadConfig       `toml:"load"`
 	CPU        MetricConfig     `toml:"cpu"`
 	Memory     MetricConfig     `toml:"memory"`
 	Filesystem FilesystemConfig `toml:"filesystem"`
@@ -30,6 +30,27 @@ type MetricConfig struct {
 	Critical float64 `toml:"critical"`
 	Enabled  bool    `toml:"enabled"`
 	Duration int     `toml:"duration"`
+}
+
+// LoadConfig represents configuration for the load average metric
+type LoadConfig struct {
+	Enabled       bool    `toml:"enabled"`
+	Auto          bool    `toml:"auto"`
+	WarningRatio  float64 `toml:"warning_ratio"`
+	CriticalRatio float64 `toml:"critical_ratio"`
+	Warning       float64 `toml:"warning"`
+	Critical      float64 `toml:"critical"`
+	Duration      int     `toml:"duration"`
+}
+
+// GetThresholds returns the effective warning and critical thresholds
+// If Auto is true, thresholds are calculated based on CPU count
+func (c *LoadConfig) GetThresholds() (warning, critical float64) {
+	if c.Auto {
+		cpuCount := float64(runtime.NumCPU())
+		return cpuCount * c.WarningRatio, cpuCount * c.CriticalRatio
+	}
+	return c.Warning, c.Critical
 }
 
 // FilesystemConfig represents filesystem metric configuration
@@ -142,19 +163,18 @@ func (e ValidationErrors) Error() string {
 
 // Default returns a new Config with default values
 func Default() *Config {
-	cpuCount := runtime.NumCPU()
-	loadWarning := float64(cpuCount) * 0.7
-	loadCritical := float64(cpuCount) * 0.9
-
 	return &Config{
 		Refresh:  2,
 		Cooldown: 60,
 		LogFile:  "",
-		Load: MetricConfig{
-			Warning:  loadWarning,
-			Critical: loadCritical,
-			Enabled:  true,
-			Duration: 60,
+		Load: LoadConfig{
+			Enabled:       true,
+			Auto:          true,
+			WarningRatio:  0.7,
+			CriticalRatio: 0.9,
+			Warning:       0,
+			Critical:      0,
+			Duration:      60,
 		},
 		CPU: MetricConfig{
 			Warning:  70,
@@ -301,9 +321,31 @@ func (c *Config) Validate() ValidationErrors {
 		errs = append(errs, validateThresholds("filesystem", c.Filesystem.Warning, c.Filesystem.Critical)...)
 	}
 
-	// Load (thresholds are not percentages, so only check warning < critical)
-	if c.Load.Enabled && c.Load.Warning >= c.Load.Critical {
-		errs = append(errs, ValidationError{"load", "warning must be less than critical"})
+	// Load validation
+	if c.Load.Enabled {
+		if c.Load.Auto {
+			// Validate ratios
+			if c.Load.WarningRatio <= 0 {
+				errs = append(errs, ValidationError{"load.warning_ratio", "must be greater than 0"})
+			}
+			if c.Load.CriticalRatio <= 0 {
+				errs = append(errs, ValidationError{"load.critical_ratio", "must be greater than 0"})
+			}
+			if c.Load.WarningRatio >= c.Load.CriticalRatio {
+				errs = append(errs, ValidationError{"load", "warning_ratio must be less than critical_ratio"})
+			}
+		} else {
+			// Validate absolute values
+			if c.Load.Warning <= 0 {
+				errs = append(errs, ValidationError{"load.warning", "must be greater than 0"})
+			}
+			if c.Load.Critical <= 0 {
+				errs = append(errs, ValidationError{"load.critical", "must be greater than 0"})
+			}
+			if c.Load.Warning >= c.Load.Critical {
+				errs = append(errs, ValidationError{"load", "warning must be less than critical"})
+			}
+		}
 	}
 
 	// Alert providers

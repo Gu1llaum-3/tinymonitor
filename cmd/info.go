@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/Gu1llaum-3/tinymonitor/internal/config"
 	"github.com/spf13/cobra"
@@ -125,8 +126,14 @@ func printMetrics(cfg *config.Config) {
 	// Load
 	if cfg.Load.Enabled {
 		dur := formatDuration(cfg.Load.Duration)
-		fmt.Printf("  [✓] Load        warning: %.1f     critical: %.1f%s\n",
-			cfg.Load.Warning, cfg.Load.Critical, dur)
+		warning, critical := cfg.Load.GetThresholds()
+		if cfg.Load.Auto {
+			fmt.Printf("  [✓] Load        warning: %.1f     critical: %.1f%s    (auto: %d CPUs)\n",
+				warning, critical, dur, runtime.NumCPU())
+		} else {
+			fmt.Printf("  [✓] Load        warning: %.1f     critical: %.1f%s\n",
+				warning, critical, dur)
+		}
 	} else {
 		fmt.Println("  [✗] Load        (disabled)")
 	}

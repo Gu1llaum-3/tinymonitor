@@ -88,11 +88,13 @@ func TestDiskCollector(t *testing.T) {
 }
 
 func TestLoadCollector(t *testing.T) {
-	cfg := config.MetricConfig{
-		Warning:  7.0,
-		Critical: 9.0,
-		Enabled:  true,
-		Duration: 60,
+	// Test with auto mode
+	cfg := config.LoadConfig{
+		Enabled:       true,
+		Auto:          true,
+		WarningRatio:  0.7,
+		CriticalRatio: 0.9,
+		Duration:      60,
 	}
 
 	collector := NewLoadCollector(cfg)
@@ -111,6 +113,32 @@ func TestLoadCollector(t *testing.T) {
 		if results[0].Component != "LOAD" {
 			t.Errorf("Expected component 'LOAD', got '%s'", results[0].Component)
 		}
+	}
+}
+
+func TestLoadCollectorManualMode(t *testing.T) {
+	// Test with manual mode
+	cfg := config.LoadConfig{
+		Enabled:  true,
+		Auto:     false,
+		Warning:  5.0,
+		Critical: 10.0,
+		Duration: 30,
+	}
+
+	collector := NewLoadCollector(cfg)
+
+	if collector.Duration() != 30 {
+		t.Errorf("Expected duration 30, got %d", collector.Duration())
+	}
+
+	// Verify thresholds are used as-is
+	warning, critical := cfg.GetThresholds()
+	if warning != 5.0 {
+		t.Errorf("Expected warning 5.0, got %f", warning)
+	}
+	if critical != 10.0 {
+		t.Errorf("Expected critical 10.0, got %f", critical)
 	}
 }
 
