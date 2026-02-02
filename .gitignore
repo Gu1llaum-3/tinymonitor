@@ -19,3 +19,9 @@ config-test.json
 
 # Documentation build
 site/
+
+# Build artifacts
+dist/
+coverage.out
+coverage.html
+completions/
