@@ -20,11 +20,15 @@ BINARY_NAME="tinymonitor"
 GITHUB_REPO="Gu1llaum-3/tinymonitor"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 VERSION="${TINYMONITOR_VERSION:-latest}"
+USE_SUDO="false"
+OS=""
+ARCH=""
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 info() {
@@ -40,40 +44,45 @@ error() {
     exit 1
 }
 
-# Detect OS
-detect_os() {
-    local os
-    os=$(uname -s | tr '[:upper:]' '[:lower:]')
+# Detect OS and architecture
+detect_system() {
+    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+    ARCH=$(uname -m)
 
-    case "$os" in
-        linux)
-            echo "linux"
-            ;;
-        darwin)
-            echo "darwin"
+    case "$OS" in
+        linux|darwin)
             ;;
         *)
-            error "Unsupported operating system: $os. Supported: linux, darwin (macOS)."
+            error "Unsupported operating system: $OS. Supported: linux, darwin (macOS)."
             ;;
     esac
-}
 
-# Detect architecture
-detect_arch() {
-    local arch
-    arch=$(uname -m)
-
-    case "$arch" in
+    case "$ARCH" in
         x86_64|amd64)
-            echo "amd64"
+            ARCH="amd64"
             ;;
         aarch64|arm64)
-            echo "arm64"
+            ARCH="arm64"
             ;;
         *)
-            error "Unsupported architecture: $arch. Supported: amd64, arm64."
+            error "Unsupported architecture: $ARCH. Supported: amd64, arm64."
             ;;
     esac
+
+    # Determine if we need sudo
+    if [ "$OS" = "linux" ] || [ "$OS" = "darwin" ]; then
+        USE_SUDO="true"
+    fi
+}
+
+# Run command with sudo if needed
+runAsRoot() {
+    local CMD="$*"
+    if [ "$USE_SUDO" = "true" ] && [ "$(id -u)" != "0" ]; then
+        echo -e "${PURPLE}We need sudo access to install to $INSTALL_DIR${NC}" >&2
+        CMD="sudo $CMD"
+    fi
+    $CMD
 }
 
 # Get latest version from GitHub
@@ -88,14 +97,11 @@ get_latest_version() {
     echo "$latest"
 }
 
-# Download binary and return temp directory path
+# Download and extract binary
 download_binary() {
     local os=$1
     local arch=$2
     local version=$3
-
-    local tmp_dir
-    tmp_dir=$(mktemp -d)
 
     # Format OS name (capitalize first letter: linux -> Linux, darwin -> Darwin)
     local os_formatted
@@ -112,52 +118,28 @@ download_binary() {
 
     info "Downloading ${BINARY_NAME} ${version} for ${os}/${arch}..."
 
-    if ! curl -sSL -o "${tmp_dir}/${archive_name}" "$download_url"; then
-        rm -rf "$tmp_dir"
-        error "Failed to download from ${download_url}"
-    fi
+    curl -sSL -o "${BINARY_NAME}-tmp.tar.gz" "$download_url" || error "Failed to download from ${download_url}"
 
     info "Extracting archive..."
-    if ! tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"; then
-        rm -rf "$tmp_dir"
-        error "Failed to extract archive"
-    fi
+    tar -xzf "${BINARY_NAME}-tmp.tar.gz" || error "Failed to extract archive"
 
-    # Find the binary (could be in root or subdirectory)
-    local binary_path
-    binary_path=$(find "$tmp_dir" -name "$BINARY_NAME" -type f -executable 2>/dev/null | head -n1)
+    # Cleanup archive
+    rm -f "${BINARY_NAME}-tmp.tar.gz"
 
-    if [[ -z "$binary_path" ]]; then
-        # Try without executable flag (might not be set in archive)
-        binary_path=$(find "$tmp_dir" -name "$BINARY_NAME" -type f 2>/dev/null | head -n1)
-    fi
-
-    if [[ -z "$binary_path" ]]; then
-        rm -rf "$tmp_dir"
+    # Check if binary exists
+    if [[ ! -f "$BINARY_NAME" ]]; then
         error "Binary not found in archive."
     fi
-
-    # Return both tmp_dir and binary_path (tmp_dir first for cleanup)
-    echo "$tmp_dir"
-    echo "$binary_path"
 }
 
 # Install binary
 install_binary() {
-    local binary_path=$1
     local install_path="${INSTALL_DIR}/${BINARY_NAME}"
 
     info "Installing to ${install_path}..."
 
-    # Check if we need sudo
-    if [[ -w "$INSTALL_DIR" ]]; then
-        cp "$binary_path" "$install_path"
-        chmod +x "$install_path"
-    else
-        warn "Need elevated privileges to install to ${INSTALL_DIR}"
-        sudo cp "$binary_path" "$install_path"
-        sudo chmod +x "$install_path"
-    fi
+    chmod +x "$BINARY_NAME" || error "Failed to set permissions"
+    runAsRoot mv "$BINARY_NAME" "$install_path" || error "Failed to install binary"
 
     info "Installation complete!"
 }
@@ -173,6 +155,13 @@ verify_installation() {
     else
         error "Installation verification failed."
     fi
+}
+
+# Cleanup temporary files
+cleanup() {
+    rm -f "${BINARY_NAME}-tmp.tar.gz" "$BINARY_NAME" 2>/dev/null
+    rm -f LICENSE README.md 2>/dev/null
+    rm -rf configs install 2>/dev/null
 }
 
 # Main function
@@ -191,11 +180,9 @@ main() {
     done
 
     # Detect system
-    local os arch
-    os=$(detect_os)
-    arch=$(detect_arch)
+    detect_system
 
-    info "Detected system: ${os}/${arch}"
+    info "Detected system: ${OS}/${ARCH}"
 
     # Get version
     if [[ "$VERSION" == "latest" ]]; then
@@ -204,23 +191,13 @@ main() {
 
     info "Version to install: ${VERSION}"
 
-    # Download and install
-    local download_result tmp_dir binary_path
-    download_result=$(download_binary "$os" "$arch" "$VERSION")
-    tmp_dir=$(echo "$download_result" | head -n1)
-    binary_path=$(echo "$download_result" | tail -n1)
-
     # Ensure cleanup on exit
-    trap "rm -rf '$tmp_dir'" EXIT
+    trap cleanup EXIT
 
-    install_binary "$binary_path"
-
-    # Verify
+    # Download, install and verify
+    download_binary "$OS" "$ARCH" "$VERSION"
+    install_binary
     verify_installation
-
-    # Cleanup
-    rm -rf "$tmp_dir"
-    trap - EXIT
 
     echo ""
     info "TinyMonitor has been installed successfully!"
@@ -231,11 +208,11 @@ main() {
     echo ""
 
     # Show OS-specific service instructions
-    if [[ "$os" == "linux" ]]; then
+    if [[ "$OS" == "linux" ]]; then
         echo "    2. Install as a systemd service (optional):"
         echo "       sudo ${BINARY_NAME} service install"
         echo ""
-    elif [[ "$os" == "darwin" ]]; then
+    elif [[ "$OS" == "darwin" ]]; then
         echo "    2. For running as a service on macOS, see:"
         echo "       https://github.com/${GITHUB_REPO}#running-as-a-service-macos-launchd"
         echo ""
@@ -244,6 +221,5 @@ main() {
     echo "  Documentation: https://github.com/${GITHUB_REPO}"
     echo ""
 }
-
 
 main "$@"
