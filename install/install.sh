@@ -88,15 +88,14 @@ get_latest_version() {
     echo "$latest"
 }
 
-# Download binary
+# Download binary and return temp directory path
 download_binary() {
     local os=$1
     local arch=$2
     local version=$3
-    local tmp_dir
 
+    local tmp_dir
     tmp_dir=$(mktemp -d)
-    trap "rm -rf $tmp_dir" EXIT
 
     # Format OS name (capitalize first letter: linux -> Linux, darwin -> Darwin)
     local os_formatted
@@ -114,11 +113,15 @@ download_binary() {
     info "Downloading ${BINARY_NAME} ${version} for ${os}/${arch}..."
 
     if ! curl -sSL -o "${tmp_dir}/${archive_name}" "$download_url"; then
+        rm -rf "$tmp_dir"
         error "Failed to download from ${download_url}"
     fi
 
     info "Extracting archive..."
-    tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"
+    if ! tar -xzf "${tmp_dir}/${archive_name}" -C "$tmp_dir"; then
+        rm -rf "$tmp_dir"
+        error "Failed to extract archive"
+    fi
 
     # Find the binary (could be in root or subdirectory)
     local binary_path
@@ -130,9 +133,12 @@ download_binary() {
     fi
 
     if [[ -z "$binary_path" ]]; then
+        rm -rf "$tmp_dir"
         error "Binary not found in archive."
     fi
 
+    # Return both tmp_dir and binary_path (tmp_dir first for cleanup)
+    echo "$tmp_dir"
     echo "$binary_path"
 }
 
@@ -199,12 +205,22 @@ main() {
     info "Version to install: ${VERSION}"
 
     # Download and install
-    local binary_path
-    binary_path=$(download_binary "$os" "$arch" "$VERSION")
+    local download_result tmp_dir binary_path
+    download_result=$(download_binary "$os" "$arch" "$VERSION")
+    tmp_dir=$(echo "$download_result" | head -n1)
+    binary_path=$(echo "$download_result" | tail -n1)
+
+    # Ensure cleanup on exit
+    trap "rm -rf '$tmp_dir'" EXIT
+
     install_binary "$binary_path"
 
     # Verify
     verify_installation
+
+    # Cleanup
+    rm -rf "$tmp_dir"
+    trap - EXIT
 
     echo ""
     info "TinyMonitor has been installed successfully!"
