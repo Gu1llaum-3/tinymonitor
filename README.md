@@ -21,23 +21,31 @@
 
 ## Installation
 
+### Quick Install (Linux / macOS)
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Gu1llaum-3/tinymonitor/main/install/install.sh | bash
+```
+
+### Manual Installation
+
 Download the latest release for your platform from the [Releases Page](https://github.com/Gu1llaum-3/tinymonitor/releases).
 
 ```bash
 # Linux AMD64
 wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_x86_64.tar.gz
 tar -xzf tinymonitor_Linux_x86_64.tar.gz
-sudo mv tinymonitor_Linux_x86_64/tinymonitor /usr/local/bin/
+sudo mv tinymonitor /usr/local/bin/
 
 # Linux ARM64
 wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_arm64.tar.gz
 tar -xzf tinymonitor_Linux_arm64.tar.gz
-sudo mv tinymonitor_Linux_arm64/tinymonitor /usr/local/bin/
+sudo mv tinymonitor /usr/local/bin/
 
 # macOS (Apple Silicon)
 curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Darwin_arm64.tar.gz
 tar -xzf tinymonitor.tar.gz
-sudo mv tinymonitor_Darwin_arm64/tinymonitor /usr/local/bin/
+sudo mv tinymonitor /usr/local/bin/
 ```
 
 ## Configuration
@@ -100,35 +108,42 @@ tinymonitor version
 
 ## Running as a Service (Linux Systemd)
 
-1.  **Create config directory:**
-    ```bash
-    sudo mkdir -p /etc/tinymonitor
-    sudo cp config.toml /etc/tinymonitor/config.toml
-    ```
+TinyMonitor includes built-in commands to manage the systemd service.
 
-2.  **Create service file** `/etc/systemd/system/tinymonitor.service`:
-    ```ini
-    [Unit]
-    Description=TinyMonitor System Monitoring Service
-    After=network.target
+### Quick Setup
 
-    [Service]
-    Type=simple
-    ExecStart=/usr/local/bin/tinymonitor
-    Restart=on-failure
-    User=nobody
-    Group=nogroup
+```bash
+# Install as a service with default configuration
+sudo tinymonitor service install
 
-    [Install]
-    WantedBy=multi-user.target
-    ```
+# Or use a custom configuration file
+sudo tinymonitor service install -c /path/to/config.toml
+```
 
-3.  **Enable and start:**
-    ```bash
-    sudo systemctl daemon-reload
-    sudo systemctl enable --now tinymonitor
-    sudo systemctl status tinymonitor
-    ```
+### Service Management
+
+```bash
+# Check service status
+tinymonitor service status
+
+# Stop and remove the service (keeps config)
+sudo tinymonitor service uninstall
+
+# Standard systemctl commands work too
+sudo systemctl status tinymonitor
+sudo systemctl restart tinymonitor
+sudo journalctl -u tinymonitor -f
+```
+
+### Complete Uninstallation
+
+```bash
+# Remove service and binary (keeps config)
+sudo tinymonitor uninstall
+
+# Remove everything including configuration
+sudo tinymonitor uninstall --purge
+```
 
 ## Building from Source
 

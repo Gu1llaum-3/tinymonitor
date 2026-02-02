@@ -34,11 +34,12 @@ archives:
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
-    wrap_in_directory: true
+    wrap_in_directory: false
     files:
       - LICENSE
       - README.md
       - configs/config.example.toml
+      - install/install.sh
 
 checksum:
   name_template: "checksums.txt"
@@ -81,45 +82,34 @@ release:
   footer: |
     ## Installation
 
-    ### Quick Install
+    ### Quick Install (Linux / macOS)
+
+    ```bash
+    curl -sSL https://raw.githubusercontent.com/Gu1llaum-3/tinymonitor/main/install/install.sh | bash
+    ```
+
+    ### Manual Install
 
     ```bash
     # Linux AMD64
     wget https://github.com/Gu1llaum-3/tinymonitor/releases/download/{{.Tag}}/tinymonitor_Linux_x86_64.tar.gz
     tar -xzf tinymonitor_Linux_x86_64.tar.gz
-    sudo mv tinymonitor_Linux_x86_64/tinymonitor /usr/local/bin/
-    sudo chmod +x /usr/local/bin/tinymonitor
+    sudo mv tinymonitor /usr/local/bin/
 
     # Linux ARM64
     wget https://github.com/Gu1llaum-3/tinymonitor/releases/download/{{.Tag}}/tinymonitor_Linux_arm64.tar.gz
     tar -xzf tinymonitor_Linux_arm64.tar.gz
-    sudo mv tinymonitor_Linux_arm64/tinymonitor /usr/local/bin/
-
-    # macOS (Apple Silicon)
-    curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/download/{{.Tag}}/tinymonitor_Darwin_arm64.tar.gz
-    tar -xzf tinymonitor.tar.gz
-    sudo mv tinymonitor_Darwin_arm64/tinymonitor /usr/local/bin/
-    ```
-
-    ### From Source
-
-    ```bash
-    git clone https://github.com/Gu1llaum-3/tinymonitor.git
-    cd tinymonitor
-    make build
+    sudo mv tinymonitor /usr/local/bin/
     ```
 
     ## Quick Start
 
-    1. Create configuration:
     ```bash
-    sudo mkdir -p /etc/tinymonitor
-    sudo cp configs/config.example.toml /etc/tinymonitor/config.toml
-    ```
+    # Install as a systemd service
+    sudo tinymonitor service install
 
-    2. Run:
-    ```bash
-    tinymonitor
+    # Check status
+    tinymonitor service status
     ```
 
     ## Full Changelog

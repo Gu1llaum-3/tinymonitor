@@ -1,0 +1,125 @@
+# TinyMonitor Configuration
+# https://github.com/Gu1llaum-3/tinymonitor
+
+# Check interval in seconds
+refresh = 2
+
+# Cooldown between repeated alerts in seconds
+# Set to -1 to alert only once per incident
+cooldown = 60
+
+# Log file path (empty string = stdout only, recommended for systemd)
+log_file = ""
+
+# ============================================================================
+# METRICS
+# ============================================================================
+
+[cpu]
+enabled = true
+warning = 70      # Percentage threshold for WARNING
+critical = 90     # Percentage threshold for CRITICAL
+duration = 0      # Seconds before alerting (0 = immediate)
+
+[memory]
+enabled = true
+warning = 70
+critical = 90
+duration = 0
+
+[load]
+enabled = true
+warning = 7.0     # Load average threshold (adjust based on CPU count)
+critical = 9.0
+duration = 60     # Wait 60s before alerting (avoids false positives)
+
+[filesystem]
+enabled = true
+warning = 80
+critical = 90
+duration = 0
+exclude = ["/dev"]      # Mountpoints to ignore, e.g. ["/mnt/backup", "/snap"]
+
+[io]
+enabled = true
+duration = 0
+# warning = "100MB"    # Optional: threshold in bytes/s (supports K, M, G suffixes)
+# critical = "500MB"
+# max_speed = "1GB"    # Required for percentage-based thresholds
+
+[reboot]
+enabled = true
+duration = 0
+
+# ============================================================================
+# ALERT PROVIDERS
+# ============================================================================
+
+[alerts]
+send_recovery = true  # Send notification when a metric returns to normal
+
+# ------------------------------------------------------------------------------
+# Ntfy - Push notifications (https://ntfy.sh)
+# ------------------------------------------------------------------------------
+[alerts.ntfy]
+enabled = false
+topic_url = "https://ntfy.sh/your_secret_topic"
+token = ""        # Optional: for private topics
+
+  [alerts.ntfy.rules]
+  default = ["WARNING", "CRITICAL"]
+  # cpu = ["CRITICAL"]           # Only critical alerts for CPU
+  # memory = ["CRITICAL"]
+  # filesystem = ["CRITICAL"]
+
+# ------------------------------------------------------------------------------
+# Google Chat - Webhook integration
+# ------------------------------------------------------------------------------
+[alerts.google_chat]
+enabled = false
+webhook_url = ""
+
+  [alerts.google_chat.rules]
+  default = ["WARNING", "CRITICAL"]
+
+# ------------------------------------------------------------------------------
+# SMTP - Email alerts
+# ------------------------------------------------------------------------------
+[alerts.smtp]
+enabled = false
+host = "smtp.gmail.com"
+port = 587
+user = ""
+password = ""
+from_addr = ""
+to_addrs = ["admin@example.com"]    # List of recipients
+use_tls = true
+
+  [alerts.smtp.rules]
+  default = ["CRITICAL"]            # Emails only for critical alerts
+
+# ------------------------------------------------------------------------------
+# Webhook - Generic HTTP POST
+# ------------------------------------------------------------------------------
+[alerts.webhook]
+enabled = false
+url = ""
+timeout = 10
+
+  [alerts.webhook.headers]
+  # Authorization = "Bearer your_token"
+  # X-Custom-Header = "value"
+
+  [alerts.webhook.rules]
+  default = ["WARNING", "CRITICAL"]
+
+# ------------------------------------------------------------------------------
+# Gotify - Self-hosted push notifications
+# ------------------------------------------------------------------------------
+[alerts.gotify]
+enabled = false
+url = "https://gotify.example.com"
+token = ""
+
+  [alerts.gotify.rules]
+  default = ["WARNING", "CRITICAL"]

@@ -2,127 +2,167 @@
 
 TinyMonitor is distributed as a standalone binary. No dependencies required.
 
-## 1. Download the Binary
+## Quick Install (Linux / macOS)
+
+The easiest way to install TinyMonitor:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Gu1llaum-3/tinymonitor/main/install/install.sh | bash
+```
+
+This script will:
+
+- Detect your system architecture (AMD64 or ARM64)
+- Download the latest release from GitHub
+- Install the binary to `/usr/local/bin`
+
+### Environment Variables
+
+You can customize the installation:
+
+```bash
+# Install a specific version
+TINYMONITOR_VERSION=v1.0.0 curl -sSL ... | bash
+
+# Install to a different directory
+INSTALL_DIR=/opt/bin curl -sSL ... | bash
+```
+
+## Manual Installation
+
+Download the latest release for your platform from the [Releases Page](https://github.com/Gu1llaum-3/tinymonitor/releases).
 
 === "Linux (AMD64)"
     ```bash
-    # Download
     wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_x86_64.tar.gz
     tar -xzf tinymonitor_Linux_x86_64.tar.gz
-    sudo mv tinymonitor_Linux_x86_64/tinymonitor /usr/local/bin/
-
-    # Make executable
-    chmod +x /usr/local/bin/tinymonitor
+    sudo mv tinymonitor /usr/local/bin/
     ```
 
 === "Linux (ARM64 / RPi)"
     ```bash
-    # Download
     wget https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Linux_arm64.tar.gz
     tar -xzf tinymonitor_Linux_arm64.tar.gz
-    sudo mv tinymonitor_Linux_arm64/tinymonitor /usr/local/bin/
-
-    # Make executable
-    chmod +x /usr/local/bin/tinymonitor
+    sudo mv tinymonitor /usr/local/bin/
     ```
 
 === "macOS (Apple Silicon)"
     ```bash
-    # Download
     curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Darwin_arm64.tar.gz
     tar -xzf tinymonitor.tar.gz
-    sudo mv tinymonitor_Darwin_arm64/tinymonitor /usr/local/bin/
-
-    # Make executable
-    chmod +x /usr/local/bin/tinymonitor
+    sudo mv tinymonitor /usr/local/bin/
     ```
 
 === "macOS (Intel)"
     ```bash
-    # Download
     curl -L -o tinymonitor.tar.gz https://github.com/Gu1llaum-3/tinymonitor/releases/latest/download/tinymonitor_Darwin_x86_64.tar.gz
     tar -xzf tinymonitor.tar.gz
-    sudo mv tinymonitor_Darwin_x86_64/tinymonitor /usr/local/bin/
-
-    # Make executable
-    chmod +x /usr/local/bin/tinymonitor
+    sudo mv tinymonitor /usr/local/bin/
     ```
 
-## 2. Build from Source
+## Build from Source
 
 If you prefer to build from source, you need Go 1.21 or higher.
 
 ```bash
-# Clone the repository
 git clone https://github.com/Gu1llaum-3/tinymonitor.git
 cd tinymonitor
-
-# Build
 make build
-
-# Or build manually
-go build -o tinymonitor ./cmd/tinymonitor
 ```
 
-## 3. Run as a Service
+## Running as a Service (Linux Systemd)
 
-To ensure TinyMonitor runs in the background and starts on boot, configure it as a service.
+TinyMonitor includes built-in commands to manage the systemd service.
 
-=== "Linux (Systemd)"
-    Create the file `/etc/systemd/system/tinymonitor.service`:
+### Quick Setup
 
-    ```ini
-    [Unit]
-    Description=TinyMonitor System Monitoring Service
-    After=network.target
+```bash
+# Install service with default configuration
+sudo tinymonitor service install
 
-    [Service]
-    Type=simple
-    ExecStart=/usr/local/bin/tinymonitor
-    Restart=on-failure
+# Or use a custom configuration file
+sudo tinymonitor service install -c /path/to/config.toml
+```
 
-    # Security: Run as unprivileged user
-    User=nobody
-    Group=nogroup
+This will:
 
-    [Install]
-    WantedBy=multi-user.target
-    ```
+1. Create `/etc/tinymonitor/` directory
+2. Copy your configuration (or create a default one)
+3. Create and enable the systemd service
+4. Start monitoring
 
-    Enable and start the service:
-    ```bash
-    sudo mkdir -p /etc/tinymonitor
-    sudo cp config.toml /etc/tinymonitor/config.toml
-    sudo systemctl daemon-reload
-    sudo systemctl enable --now tinymonitor
-    sudo systemctl status tinymonitor
-    ```
+### Service Commands
 
-=== "macOS (Launchd)"
-    Create `~/Library/LaunchAgents/com.tinymonitor.plist`:
+```bash
+# Check service status
+tinymonitor service status
 
-    ```xml
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-        <key>Label</key>
-        <string>com.tinymonitor</string>
-        <key>ProgramArguments</key>
-        <array>
-            <string>/usr/local/bin/tinymonitor</string>
-            <string>-c</string>
-            <string>/Users/YOUR_USER/.config/tinymonitor/config.toml</string>
-        </array>
-        <key>RunAtLoad</key>
-        <true/>
-        <key>KeepAlive</key>
-        <true/>
-    </dict>
-    </plist>
-    ```
+# Stop and remove the service (keeps configuration)
+sudo tinymonitor service uninstall
+```
 
-    Load the service:
-    ```bash
-    launchctl load ~/Library/LaunchAgents/com.tinymonitor.plist
-    ```
+### Standard Systemctl Commands
+
+```bash
+sudo systemctl status tinymonitor    # Check status
+sudo systemctl restart tinymonitor   # Restart service
+sudo systemctl stop tinymonitor      # Stop service
+sudo journalctl -u tinymonitor -f    # View logs
+```
+
+## Running as a Service (macOS Launchd)
+
+Create `~/Library/LaunchAgents/com.tinymonitor.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.tinymonitor</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/tinymonitor</string>
+        <string>-c</string>
+        <string>/Users/YOUR_USER/.config/tinymonitor/config.toml</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+```
+
+Load the service:
+
+```bash
+launchctl load ~/Library/LaunchAgents/com.tinymonitor.plist
+```
+
+## Uninstallation
+
+### Linux
+
+```bash
+# Remove service and binary (keeps configuration)
+sudo tinymonitor uninstall
+
+# Remove everything including configuration
+sudo tinymonitor uninstall --purge
+```
+
+### macOS
+
+```bash
+# Unload the service
+launchctl unload ~/Library/LaunchAgents/com.tinymonitor.plist
+rm ~/Library/LaunchAgents/com.tinymonitor.plist
+
+# Remove the binary
+sudo rm /usr/local/bin/tinymonitor
+
+# Remove configuration (optional)
+rm -rf ~/.config/tinymonitor
+```
