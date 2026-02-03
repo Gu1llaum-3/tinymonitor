@@ -92,13 +92,23 @@ func (m *Monitor) processState(component string, level *models.Severity, value s
 	currentState := m.alertStates[component]
 
 	if currentState == nil || currentState.Level != *level {
+		// Preserve AlertTriggered if transitioning to a lower severity
+		preserveTriggered := false
+		if currentState != nil && currentState.AlertTriggered {
+			// Check if we're going to a lower severity
+			if isLowerSeverity(*level, currentState.Level) {
+				preserveTriggered = true
+			}
+		}
+
 		m.alertStates[component] = &models.AlertState{
 			Level:          *level,
 			StartTime:      now,
-			AlertTriggered: false,
+			AlertTriggered: preserveTriggered,
 		}
 
-		if duration <= 0 {
+		// If duration is 0 OR we preserved an already-triggered alert, send immediately
+		if duration <= 0 || preserveTriggered {
 			m.alertStates[component].AlertTriggered = true
 			return StateChange{
 				ShouldAlert: true,
@@ -125,6 +135,15 @@ func (m *Monitor) processState(component string, level *models.Severity, value s
 	}
 
 	return StateChange{ShouldAlert: false}
+}
+
+// isLowerSeverity returns true if newLevel is less severe than oldLevel
+func isLowerSeverity(newLevel, oldLevel models.Severity) bool {
+	severityOrder := map[models.Severity]int{
+		models.SeverityWarning:  1,
+		models.SeverityCritical: 2,
+	}
+	return severityOrder[newLevel] < severityOrder[oldLevel]
 }
 
 // triggerAlert sends an alert with rate limiting
