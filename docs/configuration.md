@@ -70,21 +70,21 @@ log_file = ""        # Leave empty for stdout, or set a path like "/var/log/tiny
 enabled = true
 warning = 70         # Percentage threshold for WARNING alert
 critical = 90        # Percentage threshold for CRITICAL alert
-duration = 30        # Condition must persist for X seconds before alerting
+duration = 120       # Condition must persist for 2 minutes before alerting (avoids short spikes)
 
 # Memory monitoring
 [memory]
 enabled = true
 warning = 80
 critical = 95
-duration = 60
+duration = 120       # Condition must persist for 2 minutes before alerting (avoids short spikes)
 
 # Filesystem monitoring
 [filesystem]
 enabled = true
 warning = 85
 critical = 95
-duration = 0         # Duration 0 = alert immediately
+duration = 300       # Condition must persist for 5 minutes (disk fills slowly)
 
 # Load average monitoring (auto-adjusts to CPU count)
 [load]
@@ -92,7 +92,7 @@ enabled = true
 auto = true          # Calculate thresholds based on CPU count
 warning_ratio = 0.7  # warning = CPU_COUNT × 0.7
 critical_ratio = 0.9 # critical = CPU_COUNT × 0.9
-duration = 60
+duration = 180       # Condition must persist for 3 minutes (load has natural inertia)
 
 # Alert provider
 [alerts.ntfy]
@@ -122,7 +122,7 @@ Each metric (`cpu`, `memory`, `filesystem`) supports:
 | `enabled` | `bool` | `true` | Enable or disable this metric. |
 | `warning` | `float` | varies | Threshold for WARNING alert (0-100 for percentages). |
 | `critical` | `float` | varies | Threshold for CRITICAL alert (0-100 for percentages). |
-| `duration` | `int` | `0` | Time in seconds the value must exceed threshold before alerting. |
+| `duration` | `int` | varies | Time in seconds the value must exceed threshold before alerting. Default: 120s (CPU, Memory), 300s (Filesystem). |
 
 ### Load Average Settings
 
@@ -136,7 +136,7 @@ The `load` metric has an auto mode that calculates thresholds based on CPU count
 | `critical_ratio` | `float` | `0.9` | Multiplier for critical (auto mode): `CPU_COUNT × ratio`. |
 | `warning` | `float` | - | Absolute threshold (manual mode, requires `auto = false`). |
 | `critical` | `float` | - | Absolute threshold (manual mode, requires `auto = false`). |
-| `duration` | `int` | `60` | Time in seconds before alerting. |
+| `duration` | `int` | `180` | Time in seconds before alerting (3 minutes, load has natural inertia). |
 
 See [Load Average Metric](metrics/load.md) for more details.
 

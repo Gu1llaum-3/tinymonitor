@@ -19,20 +19,20 @@ log_file = ""
 enabled = true
 warning = 70      # Percentage threshold for WARNING
 critical = 90     # Percentage threshold for CRITICAL
-duration = 0      # Seconds before alerting (0 = immediate)
+duration = 120    # Seconds before alerting (2 minutes, avoids short spikes)
 
 [memory]
 enabled = true
 warning = 70
 critical = 90
-duration = 0
+duration = 120    # Seconds before alerting (2 minutes, avoids short spikes)
 
 [load]
 enabled = true
 auto = true           # Calculate thresholds based on CPU count (recommended)
 warning_ratio = 0.7   # warning = CPU_COUNT × 0.7
 critical_ratio = 0.9  # critical = CPU_COUNT × 0.9
-duration = 60         # Wait 60s before alerting (avoids false positives)
+duration = 180        # Seconds before alerting (3 minutes, load has natural inertia)
 # For manual thresholds, set auto = false and use:
 # auto = false
 # warning = 5.0
@@ -42,12 +42,12 @@ duration = 60         # Wait 60s before alerting (avoids false positives)
 enabled = true
 warning = 80
 critical = 90
-duration = 0
-exclude = ["/dev"]      # Mountpoints to ignore, e.g. ["/mnt/backup", "/snap"]
+duration = 300        # Seconds before alerting (5 minutes, disk fills slowly)
+exclude = ["/dev"]    # Mountpoints to ignore, e.g. ["/mnt/backup", "/snap"]
 
 [io]
 enabled = true
-duration = 0
+duration = 120        # Seconds before alerting (2 minutes, can impact performance)
 # warning = "100MB"    # Optional: threshold in bytes/s (supports K, M, G suffixes)
 # critical = "500MB"
 # max_speed = "1GB"    # Required for percentage-based thresholds

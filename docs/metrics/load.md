@@ -33,7 +33,7 @@ enabled = true
 auto = true           # Calculate thresholds based on CPU count
 warning_ratio = 0.7   # warning = CPU_COUNT × 0.7
 critical_ratio = 0.9  # critical = CPU_COUNT × 0.9
-duration = 60
+duration = 180
 ```
 
 With auto mode, the same configuration works on any machine:
@@ -55,7 +55,7 @@ enabled = true
 auto = false
 warning = 5.0
 critical = 10.0
-duration = 60
+duration = 180
 ```
 
 ### Parameters
@@ -68,7 +68,7 @@ duration = 60
 | `critical_ratio` | `float` | `0.9` | Multiplier for critical threshold (auto mode). |
 | `warning` | `float` | - | Absolute warning threshold (manual mode). |
 | `critical` | `float` | - | Absolute critical threshold (manual mode). |
-| `duration` | `int` | `60` | Time in seconds the value must exceed threshold before alerting. |
+| `duration` | `int` | `180` | Time in seconds the value must exceed threshold before alerting. |
 
 ## Viewing Effective Thresholds
 
@@ -82,13 +82,13 @@ Example output on an 8-core system:
 
 ```
 Metrics
-  [✓] Load        warning: 5.6     critical: 7.2    duration: 60s    (auto: 8 CPUs)
+  [✓] Load        warning: 5.6     critical: 7.2    duration: 180s   (auto: 8 CPUs)
 ```
 
 ## Tips
 
 *   **Use auto mode** for portable configurations that work across different machines
-*   **Set duration to 60s** or more to avoid false positives from temporary load spikes
+*   **Default duration of 3 minutes (180s)** helps avoid false positives from temporary load spikes, as load average already has natural inertia
 *   **Adjust ratios** if you want more/less headroom:
     - Conservative: `warning_ratio = 0.5`, `critical_ratio = 0.7`
     - Aggressive: `warning_ratio = 0.8`, `critical_ratio = 1.0`

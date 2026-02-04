@@ -13,7 +13,7 @@ It uses the [gopsutil](https://github.com/shirou/gopsutil) library to get the pe
 enabled = true
 warning = 80
 critical = 95
-duration = 60
+duration = 120
 ```
 
 ### Parameters
@@ -23,8 +23,8 @@ duration = 60
 | `enabled` | `bool` | `true` | Enable or disable this metric. |
 | `warning` | `float` | `70` | Percentage threshold for WARNING alert. |
 | `critical` | `float` | `90` | Percentage threshold for CRITICAL alert. |
-| `duration` | `int` | `0` | Time in seconds the value must be above threshold before alerting. |
+| `duration` | `int` | `120` | Time in seconds the value must be above threshold before alerting. |
 
 ### Recommendations
 
-High memory usage is often normal for servers (caching). Ensure your thresholds reflect actual memory pressure rather than just cache usage.
+High memory usage is often normal for servers (caching). The default `duration` of **2 minutes (120 seconds)** helps avoid false positives from temporary memory spikes. Ensure your thresholds reflect actual memory pressure rather than just cache usage.

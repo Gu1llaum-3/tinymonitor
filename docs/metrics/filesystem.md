@@ -23,7 +23,7 @@ You can also exclude additional mount points in the configuration.
 enabled = true
 warning = 85
 critical = 95
-duration = 0
+duration = 300
 exclude = ["/mnt/backup", "/media/usb"]
 ```
 
@@ -34,9 +34,9 @@ exclude = ["/mnt/backup", "/media/usb"]
 | `enabled` | `bool` | `true` | Enable or disable this metric. |
 | `warning` | `float` | `80` | Percentage threshold for WARNING alert. |
 | `critical` | `float` | `90` | Percentage threshold for CRITICAL alert. |
-| `duration` | `int` | `0` | Time in seconds the value must be above threshold before alerting. |
+| `duration` | `int` | `300` | Time in seconds the value must be above threshold before alerting. |
 | `exclude` | `list` | `[]` | List of mount points to exclude from monitoring. |
 
 ### Recommendations
 
-Disk usage rarely fluctuates rapidly. A `duration` of `0` (immediate) is usually fine.
+Disk usage fills slowly and predictably. The default `duration` of **5 minutes (300 seconds)** provides ample time to react while avoiding unnecessary alerts for known disk operations.

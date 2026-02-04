@@ -174,25 +174,25 @@ func Default() *Config {
 			CriticalRatio: 0.9,
 			Warning:       0,
 			Critical:      0,
-			Duration:      60,
+			Duration:      180,
 		},
 		CPU: MetricConfig{
 			Warning:  70,
 			Critical: 90,
 			Enabled:  true,
-			Duration: 0,
+			Duration: 120,
 		},
 		Memory: MetricConfig{
 			Warning:  70,
 			Critical: 90,
 			Enabled:  true,
-			Duration: 0,
+			Duration: 120,
 		},
 		Filesystem: FilesystemConfig{
 			Warning:  80,
 			Critical: 90,
 			Enabled:  true,
-			Duration: 0,
+			Duration: 300,
 			Exclude:  []string{},
 		},
 		Reboot: RebootConfig{
@@ -201,7 +201,7 @@ func Default() *Config {
 		},
 		IO: IOConfig{
 			Enabled:  true,
-			Duration: 0,
+			Duration: 120,
 		},
 		Alerts: AlertsConfig{
 			SendRecovery: true,

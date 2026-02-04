@@ -13,7 +13,7 @@ It uses the [gopsutil](https://github.com/shirou/gopsutil) library to measure th
 enabled = true
 warning = 70
 critical = 90
-duration = 30
+duration = 120
 ```
 
 ### Parameters
@@ -23,8 +23,8 @@ duration = 30
 | `enabled` | `bool` | `true` | Enable or disable this metric. |
 | `warning` | `float` | `70` | Percentage threshold for WARNING alert. |
 | `critical` | `float` | `90` | Percentage threshold for CRITICAL alert. |
-| `duration` | `int` | `0` | Time in seconds the value must be above threshold before alerting. |
+| `duration` | `int` | `120` | Time in seconds the value must be above threshold before alerting. |
 
 ### Recommendations
 
-CPU usage can spike momentarily. It is recommended to set a `duration` of at least **30 seconds** to avoid false positives due to short bursts of activity.
+CPU usage can spike momentarily. The default `duration` of **2 minutes (120 seconds)** helps avoid false positives due to short bursts of activity (garbage collection, temporary load spikes).
