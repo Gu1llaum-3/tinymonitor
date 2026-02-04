@@ -169,17 +169,43 @@ func InstallBinary(newBinaryPath string) error {
 	}
 
 	// Install to BinaryPath (defined in service.go as /usr/local/bin/tinymonitor)
+	// Use atomic rename instead of copy to avoid "text file busy" errors
+	tmpPath := BinaryPath + ".new"
+
 	if IsRoot() {
-		// Direct copy if root
-		return copyFile(newBinaryPath, BinaryPath)
+		// Direct copy then rename if root
+		if err := copyFile(newBinaryPath, tmpPath); err != nil {
+			return fmt.Errorf("failed to copy binary: %w", err)
+		}
+		if err := os.Rename(tmpPath, BinaryPath); err != nil {
+			os.Remove(tmpPath) // Clean up on failure
+			return fmt.Errorf("failed to install binary: %w", err)
+		}
+		return nil
 	}
 
 	// Use sudo if not root
-	cmd = exec.Command("sudo", "cp", newBinaryPath, BinaryPath)
+	// First copy to temporary location
+	cmd = exec.Command("sudo", "cp", newBinaryPath, tmpPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy binary: %w", err)
+	}
+
+	// Then atomically rename (mv can replace running binaries)
+	cmd = exec.Command("sudo", "mv", tmpPath, BinaryPath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	if err := cmd.Run(); err != nil {
+		// Clean up temp file on failure
+		exec.Command("sudo", "rm", "-f", tmpPath).Run()
+		return fmt.Errorf("failed to install binary: %w", err)
+	}
+
+	return nil
 }
 
 // copyFile copies a file from src to dst
