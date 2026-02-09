@@ -4,9 +4,10 @@
   <img src="docs/assets/images/logo.png" alt="TinyMonitor Logo" width="200"/>
 </p>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Go](https://img.shields.io/badge/go-1.21%2B-00ADD8)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos-lightgrey)
+[![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?style=for-the-badge&logo=go)](https://go.dev/)
+[![Release](https://img.shields.io/github/v/release/Gu1llaum-3/tinymonitor?style=for-the-badge)](https://github.com/Gu1llaum-3/tinymonitor/releases)
+[![License](https://img.shields.io/github/license/Gu1llaum-3/tinymonitor?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey?style=for-the-badge&logo=linux)](https://github.com/Gu1llaum-3/tinymonitor/releases)
 
 **TinyMonitor** is a lightweight system monitoring agent written in Go, designed for simplicity and performance. It runs silently in the background, watching your system resources, and alerts you immediately when something goes wrong.
 
@@ -174,7 +175,7 @@ Your configuration files are never modified during updates. If the service is ru
 
 ## Building from Source
 
-Requires Go 1.21+.
+Requires Go 1.25+.
 
 ```bash
 git clone https://github.com/Gu1llaum-3/tinymonitor.git
