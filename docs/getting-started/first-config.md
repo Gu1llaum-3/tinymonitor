@@ -58,9 +58,21 @@ auto = true           # Calculates thresholds based on CPU count
 warning_ratio = 0.7
 critical_ratio = 0.9
 
+  [load.window5]      # 5-minute average, monitored by default
+  enabled = true
+  duration = 300      # "for: 5m" before alerting
+
+  [load.window15]     # 15-minute average, opt-in
+  enabled = false
+  duration = 0
+
 [reboot]
 enabled = true        # Debian/Ubuntu only
 ```
+
+> Load alerting uses the 5-minute average by default (and the 15-minute average
+> as an opt-in); the 1-minute average is not exposed. Alert routing rules key on
+> `load5` / `load15`.
 
 See [Metrics](../metrics/index.md) for detailed documentation on each metric.
 

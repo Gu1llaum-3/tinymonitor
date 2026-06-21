@@ -88,57 +88,73 @@ func TestDiskCollector(t *testing.T) {
 }
 
 func TestLoadCollector(t *testing.T) {
-	// Test with auto mode
+	// Test with auto mode: window5 monitored, window15 opt-in
 	cfg := config.LoadConfig{
 		Enabled:       true,
 		Auto:          true,
 		WarningRatio:  0.7,
 		CriticalRatio: 0.9,
-		Duration:      60,
+		Window5:       config.LoadWindowConfig{Enabled: true, Duration: 60},
+		Window15:      config.LoadWindowConfig{Enabled: true, Duration: 0},
 	}
 
-	collector := NewLoadCollector(cfg)
-
-	if collector.Name() != "load" {
-		t.Errorf("Expected name 'load', got '%s'", collector.Name())
+	cases := []struct {
+		window        int
+		wantName      string
+		wantDuration  int
+		wantComponent string
+	}{
+		{5, "load5", 60, "LOAD5"},
+		{15, "load15", 0, "LOAD15"},
 	}
 
-	if collector.Duration() != 60 {
-		t.Errorf("Expected duration 60, got %d", collector.Duration())
-	}
+	for _, tc := range cases {
+		collector := NewLoadCollector(tc.window, cfg)
 
-	results := collector.Check()
-	// May be empty on Windows
-	if len(results) == 1 {
-		if results[0].Component != "LOAD" {
-			t.Errorf("Expected component 'LOAD', got '%s'", results[0].Component)
+		if collector.Name() != tc.wantName {
+			t.Errorf("window %d: expected name '%s', got '%s'", tc.window, tc.wantName, collector.Name())
+		}
+
+		if collector.Duration() != tc.wantDuration {
+			t.Errorf("window %d: expected duration %d, got %d", tc.window, tc.wantDuration, collector.Duration())
+		}
+
+		results := collector.Check()
+		// May be empty on Windows
+		if len(results) == 1 {
+			if results[0].Component != tc.wantComponent {
+				t.Errorf("window %d: expected component '%s', got '%s'", tc.window, tc.wantComponent, results[0].Component)
+			}
 		}
 	}
 }
 
 func TestLoadCollectorManualMode(t *testing.T) {
-	// Test with manual mode
+	// Test with manual mode, including a per-window threshold override
 	cfg := config.LoadConfig{
 		Enabled:  true,
 		Auto:     false,
 		Warning:  5.0,
 		Critical: 10.0,
-		Duration: 30,
+		Window5:  config.LoadWindowConfig{Enabled: true, Duration: 30},
+		Window15: config.LoadWindowConfig{Enabled: true, Duration: 0, Warning: 3.0, Critical: 6.0},
 	}
 
-	collector := NewLoadCollector(cfg)
-
+	collector := NewLoadCollector(5, cfg)
 	if collector.Duration() != 30 {
 		t.Errorf("Expected duration 30, got %d", collector.Duration())
 	}
 
-	// Verify thresholds are used as-is
-	warning, critical := cfg.GetThresholds()
-	if warning != 5.0 {
-		t.Errorf("Expected warning 5.0, got %f", warning)
+	// window5 inherits the shared [load] thresholds
+	warning, critical := cfg.ThresholdsFor(cfg.Window5)
+	if warning != 5.0 || critical != 10.0 {
+		t.Errorf("Expected window5 thresholds 5.0/10.0, got %f/%f", warning, critical)
 	}
-	if critical != 10.0 {
-		t.Errorf("Expected critical 10.0, got %f", critical)
+
+	// window15 overrides them
+	warning, critical = cfg.ThresholdsFor(cfg.Window15)
+	if warning != 3.0 || critical != 6.0 {
+		t.Errorf("Expected window15 thresholds 3.0/6.0, got %f/%f", warning, critical)
 	}
 }
 

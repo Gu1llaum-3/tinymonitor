@@ -41,7 +41,7 @@ tinymonitor/
 │   │   ├── cpu.go              # CPU usage (gopsutil)
 │   │   ├── memory.go           # Mémoire (RAM/Swap)
 │   │   ├── disk.go             # Filesystem usage
-│   │   ├── load.go             # Load average (1/5/15 min)
+│   │   ├── load.go             # Load average alerting (5 min default, 15 min opt-in)
 │   │   ├── io.go               # I/O disque
 │   │   ├── reboot.go           # Détection reboot système
 │   │   └── metrics_test.go

@@ -61,13 +61,11 @@ func (p *BaseProvider) ShouldSend(component string, level models.Severity) bool 
 	return contains(allowedLevels, string(level))
 }
 
-// normalizeComponentName converts the technical component name to a configuration key
+// normalizeComponentName converts the technical component name to a configuration key.
+// Load windows ("LOAD5"/"LOAD15") map to "load5"/"load15" via the lowercase default.
 func normalizeComponentName(component string) string {
 	if strings.HasPrefix(component, "DISK:") {
 		return "filesystem"
-	}
-	if component == "LOAD" {
-		return "load"
 	}
 	return strings.ToLower(component)
 }

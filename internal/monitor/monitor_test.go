@@ -54,16 +54,16 @@ func TestIsLowerSeverity(t *testing.T) {
 
 func TestProcessState_RecoveryNotifications(t *testing.T) {
 	tests := []struct {
-		name           string
-		setupStates    func(*Monitor) // Setup initial state
-		component      string
-		level          *models.Severity
-		value          string
-		duration       int
+		name            string
+		setupStates     func(*Monitor) // Setup initial state
+		component       string
+		level           *models.Severity
+		value           string
+		duration        int
 		wantShouldAlert bool
-		wantIsRecovery bool
-		wantLevel      models.Severity
-		description    string
+		wantIsRecovery  bool
+		wantLevel       models.Severity
+		description     string
 	}{
 		{
 			name:      "CRITICAL to OK should send recovery",
@@ -324,6 +324,45 @@ func TestProcessState_NoRecoveryIfNeverTriggered(t *testing.T) {
 	// Verify state is cleaned up
 	if _, exists := m.alertStates[component]; exists {
 		t.Error("Alert state should be deleted")
+	}
+}
+
+func TestProcessState_LoadWindowsAreIndependent(t *testing.T) {
+	// load5 and load15 are distinct components: an alert on one must not
+	// affect the alert state of the other.
+	cfg := &config.Config{
+		Refresh:  5,
+		Cooldown: 60,
+		Alerts:   config.AlertsConfig{SendRecovery: true},
+	}
+	m := New(cfg)
+
+	critical := models.SeverityCritical
+
+	// load5 fires immediately (duration 0)
+	change := m.processState("load5", &critical, "8.0", 0)
+	if !change.ShouldAlert || change.IsRecovery {
+		t.Fatal("load5 should trigger a CRITICAL alert immediately")
+	}
+
+	// load15 must have no state yet — it is untouched by load5
+	if _, exists := m.alertStates["load15"]; exists {
+		t.Error("load15 state should not exist after only load5 fired")
+	}
+
+	// load15 fires on its own, independently
+	change = m.processState("load15", &critical, "7.0", 0)
+	if !change.ShouldAlert || change.IsRecovery {
+		t.Fatal("load15 should trigger its own CRITICAL alert")
+	}
+
+	// Recovering load5 must not clear load15's state
+	change = m.processState("load5", nil, "1.0", 0)
+	if !change.IsRecovery {
+		t.Error("load5 should send a recovery")
+	}
+	if _, exists := m.alertStates["load15"]; !exists {
+		t.Error("load15 state should still exist after load5 recovered")
 	}
 }
 

@@ -92,7 +92,14 @@ enabled = true
 auto = true          # Calculate thresholds based on CPU count
 warning_ratio = 0.7  # warning = CPU_COUNT × 0.7
 critical_ratio = 0.9 # critical = CPU_COUNT × 0.9
-duration = 180       # Condition must persist for 3 minutes (load has natural inertia)
+
+  [load.window5]     # 5-minute average (Prometheus-style)
+  enabled = true
+  duration = 300     # "for: 5m" before alerting
+
+  [load.window15]    # 15-minute average (opt-in)
+  enabled = false
+  duration = 0
 
 # Alert provider
 [alerts.ntfy]
@@ -126,19 +133,31 @@ Each metric (`cpu`, `memory`, `filesystem`) supports:
 
 ### Load Average Settings
 
-The `load` metric has an auto mode that calculates thresholds based on CPU count:
+Load alerting uses the **5-minute** average by default and the **15-minute**
+average as an opt-in. The 1-minute average is not exposed (too noisy). Thresholds
+are shared at the `[load]` level; each window controls `enabled` and `duration`.
+
+`[load]` (shared thresholds):
 
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `enabled` | `bool` | `true` | Enable or disable this metric. |
+| `enabled` | `bool` | `true` | Master switch for load monitoring. |
 | `auto` | `bool` | `true` | Calculate thresholds based on CPU count. |
 | `warning_ratio` | `float` | `0.7` | Multiplier for warning (auto mode): `CPU_COUNT × ratio`. |
 | `critical_ratio` | `float` | `0.9` | Multiplier for critical (auto mode): `CPU_COUNT × ratio`. |
 | `warning` | `float` | - | Absolute threshold (manual mode, requires `auto = false`). |
 | `critical` | `float` | - | Absolute threshold (manual mode, requires `auto = false`). |
-| `duration` | `int` | `180` | Time in seconds before alerting (3 minutes, load has natural inertia). |
 
-See [Load Average Metric](metrics/load.md) for more details.
+`[load.window5]` / `[load.window15]` (per window):
+
+| Parameter | Type | Default (5m / 15m) | Description |
+| :--- | :--- | :--- | :--- |
+| `enabled` | `bool` | `true` / `false` | Monitor this window. |
+| `duration` | `int` | `300` / `0` | Seconds above threshold before alerting (`0` = immediate). |
+| `warning` / `critical` | `float` | inherit | Optional per-window threshold override (manual mode). |
+| `warning_ratio` / `critical_ratio` | `float` | inherit | Optional per-window ratio override (auto mode). |
+
+Alert routing rules key on `load5` and `load15`. See [Load Average Metric](metrics/load.md) for more details.
 
 ### Alert Settings
 

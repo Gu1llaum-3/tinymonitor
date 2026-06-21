@@ -32,25 +32,52 @@ type MetricConfig struct {
 	Duration int     `toml:"duration"`
 }
 
-// LoadConfig represents configuration for the load average metric
-type LoadConfig struct {
+// LoadWindowConfig configures alerting for a single load-average window.
+// Threshold overrides are optional: a zero value inherits the shared [load] default.
+type LoadWindowConfig struct {
 	Enabled       bool    `toml:"enabled"`
-	Auto          bool    `toml:"auto"`
-	WarningRatio  float64 `toml:"warning_ratio"`
-	CriticalRatio float64 `toml:"critical_ratio"`
+	Duration      int     `toml:"duration"`
 	Warning       float64 `toml:"warning"`
 	Critical      float64 `toml:"critical"`
-	Duration      int     `toml:"duration"`
+	WarningRatio  float64 `toml:"warning_ratio"`
+	CriticalRatio float64 `toml:"critical_ratio"`
 }
 
-// GetThresholds returns the effective warning and critical thresholds
-// If Auto is true, thresholds are calculated based on CPU count
-func (c *LoadConfig) GetThresholds() (warning, critical float64) {
+// LoadConfig represents configuration for the load average metric.
+// Thresholds are shared across windows; each window controls whether it is
+// monitored and after how long it alerts. The 1-minute average is not exposed
+// as it is too noisy for alerting.
+type LoadConfig struct {
+	Enabled       bool             `toml:"enabled"`
+	Auto          bool             `toml:"auto"`
+	WarningRatio  float64          `toml:"warning_ratio"`
+	CriticalRatio float64          `toml:"critical_ratio"`
+	Warning       float64          `toml:"warning"`
+	Critical      float64          `toml:"critical"`
+	Window5       LoadWindowConfig `toml:"window5"`
+	Window15      LoadWindowConfig `toml:"window15"`
+}
+
+// loadOverride returns the per-window override when set (> 0), otherwise the
+// shared [load] default. A zero value means "inherit" (0 is never a valid load
+// threshold, so it cannot be a legitimate override).
+func loadOverride(override, base float64) float64 {
+	if override > 0 {
+		return override
+	}
+	return base
+}
+
+// ThresholdsFor returns the effective warning and critical thresholds for a
+// window. Per-window overrides take precedence; a zero override falls back to
+// the shared [load] default. If Auto is true, thresholds are CPU count × ratio.
+func (c *LoadConfig) ThresholdsFor(w LoadWindowConfig) (warning, critical float64) {
 	if c.Auto {
 		cpuCount := float64(runtime.NumCPU())
-		return cpuCount * c.WarningRatio, cpuCount * c.CriticalRatio
+		return cpuCount * loadOverride(w.WarningRatio, c.WarningRatio),
+			cpuCount * loadOverride(w.CriticalRatio, c.CriticalRatio)
 	}
-	return c.Warning, c.Critical
+	return loadOverride(w.Warning, c.Warning), loadOverride(w.Critical, c.Critical)
 }
 
 // FilesystemConfig represents filesystem metric configuration
@@ -174,7 +201,12 @@ func Default() *Config {
 			CriticalRatio: 0.9,
 			Warning:       0,
 			Critical:      0,
-			Duration:      180,
+			// 5-minute average: monitored by default with a 5-minute
+			// confirmation window (Prometheus-style "for: 5m").
+			Window5: LoadWindowConfig{Enabled: true, Duration: 300},
+			// 15-minute average: available but opt-in. When enabled it alerts
+			// immediately (the 15-minute window is its own confirmation).
+			Window15: LoadWindowConfig{Enabled: false, Duration: 0},
 		},
 		CPU: MetricConfig{
 			Warning:  70,
@@ -321,30 +353,33 @@ func (c *Config) Validate() ValidationErrors {
 		errs = append(errs, validateThresholds("filesystem", c.Filesystem.Warning, c.Filesystem.Critical)...)
 	}
 
-	// Load validation
+	// Load validation: each enabled window is checked against its effective
+	// (override-resolved) thresholds, covering both auto and manual modes.
 	if c.Load.Enabled {
-		if c.Load.Auto {
-			// Validate ratios
-			if c.Load.WarningRatio <= 0 {
-				errs = append(errs, ValidationError{"load.warning_ratio", "must be greater than 0"})
+		validateLoadWindow := func(name string, w LoadWindowConfig) {
+			if !w.Enabled {
+				return
 			}
-			if c.Load.CriticalRatio <= 0 {
-				errs = append(errs, ValidationError{"load.critical_ratio", "must be greater than 0"})
+			if w.Duration < 0 {
+				errs = append(errs, ValidationError{"load." + name + ".duration", "must be >= 0"})
 			}
-			if c.Load.WarningRatio >= c.Load.CriticalRatio {
-				errs = append(errs, ValidationError{"load", "warning_ratio must be less than critical_ratio"})
+			warning, critical := c.Load.ThresholdsFor(w)
+			if warning <= 0 {
+				errs = append(errs, ValidationError{"load." + name, "warning threshold must be greater than 0"})
 			}
-		} else {
-			// Validate absolute values
-			if c.Load.Warning <= 0 {
-				errs = append(errs, ValidationError{"load.warning", "must be greater than 0"})
+			if critical <= 0 {
+				errs = append(errs, ValidationError{"load." + name, "critical threshold must be greater than 0"})
 			}
-			if c.Load.Critical <= 0 {
-				errs = append(errs, ValidationError{"load.critical", "must be greater than 0"})
+			if warning >= critical {
+				errs = append(errs, ValidationError{"load." + name, "warning must be less than critical"})
 			}
-			if c.Load.Warning >= c.Load.Critical {
-				errs = append(errs, ValidationError{"load", "warning must be less than critical"})
-			}
+		}
+		validateLoadWindow("window5", c.Load.Window5)
+		validateLoadWindow("window15", c.Load.Window15)
+
+		// Guard against a silent no-op: load enabled but neither window active.
+		if !c.Load.Window5.Enabled && !c.Load.Window15.Enabled {
+			errs = append(errs, ValidationError{"load", "enabled but no window active (enable window5 or window15)"})
 		}
 	}
 

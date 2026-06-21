@@ -123,17 +123,25 @@ func printMetrics(cfg *config.Config) {
 		fmt.Println("  [✗] Filesystem  (disabled)")
 	}
 
-	// Load
+	// Load (per-window: 5m monitored by default, 15m opt-in)
 	if cfg.Load.Enabled {
-		dur := formatDuration(cfg.Load.Duration)
-		warning, critical := cfg.Load.GetThresholds()
-		if cfg.Load.Auto {
-			fmt.Printf("  [✓] Load        warning: %.1f     critical: %.1f%s    (auto: %d CPUs)\n",
-				warning, critical, dur, runtime.NumCPU())
-		} else {
-			fmt.Printf("  [✓] Load        warning: %.1f     critical: %.1f%s\n",
-				warning, critical, dur)
+		printLoadWindow := func(label string, w config.LoadWindowConfig) {
+			if !w.Enabled {
+				fmt.Printf("  [✗] %s (disabled)\n", label)
+				return
+			}
+			dur := formatDuration(w.Duration)
+			warning, critical := cfg.Load.ThresholdsFor(w)
+			if cfg.Load.Auto {
+				fmt.Printf("  [✓] %s warning: %.1f     critical: %.1f%s    (auto: %d CPUs)\n",
+					label, warning, critical, dur, runtime.NumCPU())
+			} else {
+				fmt.Printf("  [✓] %s warning: %.1f     critical: %.1f%s\n",
+					label, warning, critical, dur)
+			}
 		}
+		printLoadWindow("Load 5m ", cfg.Load.Window5)
+		printLoadWindow("Load 15m", cfg.Load.Window15)
 	} else {
 		fmt.Println("  [✗] Load        (disabled)")
 	}

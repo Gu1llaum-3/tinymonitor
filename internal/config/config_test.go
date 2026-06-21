@@ -43,11 +43,24 @@ func TestDefault(t *testing.T) {
 		t.Errorf("Expected Load.CriticalRatio=0.9, got %f", cfg.Load.CriticalRatio)
 	}
 
-	// Verify GetThresholds calculates correctly
+	// 5-minute window is monitored by default with a 5-minute confirmation
+	if !cfg.Load.Window5.Enabled {
+		t.Error("Expected Load.Window5.Enabled=true")
+	}
+	if cfg.Load.Window5.Duration != 300 {
+		t.Errorf("Expected Load.Window5.Duration=300, got %d", cfg.Load.Window5.Duration)
+	}
+
+	// 15-minute window is opt-in (disabled by default)
+	if cfg.Load.Window15.Enabled {
+		t.Error("Expected Load.Window15.Enabled=false")
+	}
+
+	// Verify ThresholdsFor calculates correctly for the default window
 	cpuCount := runtime.NumCPU()
 	expectedWarning := float64(cpuCount) * 0.7
 	expectedCritical := float64(cpuCount) * 0.9
-	warning, critical := cfg.Load.GetThresholds()
+	warning, critical := cfg.Load.ThresholdsFor(cfg.Load.Window5)
 
 	if warning != expectedWarning {
 		t.Errorf("Expected Load warning threshold=%f, got %f", expectedWarning, warning)
@@ -240,6 +253,42 @@ to_addrs = ["admin@example.com"]
 `,
 			expectError: true,
 			errorField:  "alerts.smtp.port",
+		},
+		{
+			// [load.window5] keeps its default (enabled) when only [load] is set,
+			// so manual thresholds with warning >= critical must be rejected.
+			name: "load window5 warning >= critical",
+			config: `
+refresh = 5
+cooldown = 60
+
+[load]
+enabled = true
+auto = false
+warning = 10
+critical = 5
+`,
+			expectError: true,
+			errorField:  "load.window5",
+		},
+		{
+			// load enabled but both windows disabled => silent no-op, rejected.
+			name: "load enabled with no active window",
+			config: `
+refresh = 5
+cooldown = 60
+
+[load]
+enabled = true
+
+[load.window5]
+enabled = false
+
+[load.window15]
+enabled = false
+`,
+			expectError: true,
+			errorField:  "load",
 		},
 	}
 

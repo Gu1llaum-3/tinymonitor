@@ -56,7 +56,12 @@ func (m *Monitor) loadCollectors() {
 	}
 
 	if m.config.Load.Enabled {
-		m.collectors = append(m.collectors, metrics.NewLoadCollector(m.config.Load))
+		if m.config.Load.Window5.Enabled {
+			m.collectors = append(m.collectors, metrics.NewLoadCollector(5, m.config.Load))
+		}
+		if m.config.Load.Window15.Enabled {
+			m.collectors = append(m.collectors, metrics.NewLoadCollector(15, m.config.Load))
+		}
 	}
 
 	if m.config.Reboot.Enabled {

@@ -28,15 +28,27 @@ critical = 90
 duration = 120    # Seconds before alerting (2 minutes, avoids short spikes)
 
 [load]
-enabled = true
+enabled = true        # Master switch for load monitoring
 auto = true           # Calculate thresholds based on CPU count (recommended)
 warning_ratio = 0.7   # warning = CPU_COUNT × 0.7
 critical_ratio = 0.9  # critical = CPU_COUNT × 0.9
-duration = 180        # Seconds before alerting (3 minutes, load has natural inertia)
 # For manual thresholds, set auto = false and use:
 # auto = false
 # warning = 5.0
 # critical = 10.0
+
+# 5-minute load average (Prometheus-style: alert when sustained above threshold)
+[load.window5]
+enabled = true
+duration = 300        # "for: 5m" — confirmation window before alerting
+
+# 15-minute load average (opt-in: enable for long-running load alerts)
+[load.window15]
+enabled = false
+duration = 0          # 0 = alert immediately (the 15m window is its own smoothing)
+# Per-window threshold overrides (optional, inherit [load] defaults if unset):
+# warning_ratio = 0.6
+# critical_ratio = 0.8
 
 [filesystem]
 enabled = true
